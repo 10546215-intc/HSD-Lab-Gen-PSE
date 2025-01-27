@@ -4,7 +4,9 @@ from tkinter import *
 import tkinter.messagebox
 import tkinter.font as tkFont
 from ttkwidgets import tooltips
-from datetime import datetime, timedelta
+import datetime
+#from datetime import datetime, timedelta
+from datetime import timedelta
 import time
 import csv
 import json
@@ -381,11 +383,14 @@ class App():
             i += 1
  
         #Get the Date
-        from datetime import date
-        today = date.today()
- 
-        WorkWeek = today.isocalendar().week
-        year = today.year
+ ##       from datetime import date
+        today = datetime.date.today()
+        iso_calendar = today.isocalendar()
+        WorkWeek = iso_calendar[1]
+ #       WorkWeek = today.isocalendar().week
+        year = iso_calendar[0]
+#        year = today.year
+        
  
         WorkWeekValue_Inside = tk.StringVar(root)
         YearValue_Inside = tk.StringVar(root)
