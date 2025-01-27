@@ -1,5 +1,6 @@
 {
     "[csv]": {
-        "editor.inlayHints.maximumLength": 0
-    }
+        "editor.inlayHints.maximumLength": 5000
+    },
+    "diffEditor.wordWrap": "off"
 }
