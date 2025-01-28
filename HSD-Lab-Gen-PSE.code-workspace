@@ -6,5 +6,9 @@
 	],
 
 
-	"settings": {},
+	"settings": {
+		"[dynamic csv]": {
+			"editor.inlayHints.maximumLength": 0
+		}
+	},
 }

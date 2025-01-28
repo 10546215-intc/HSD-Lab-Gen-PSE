@@ -117,7 +117,8 @@ class App():
                 for line in csv_config:
                     if(line['Version']):
                         configver = line['Version']
- 
+    ##******## This seems to look at config file for Dynamic value, is hardcoded to "New"
+    ##******## If has value then checks HSD to see if field values exist if passes the writes to ticket variables
                     if(line['Dynamic']):
                         dynamic_CSV_file = line['Dynamic']
  
@@ -127,7 +128,6 @@ class App():
                             project_options.append(line['Program'])
  
                     if(line['Site']):
- 
                        if validateField('support.site',line['Site']):
                            sites_options.append(line['Site'])
                            lab_dict.update({line['Site']: line['Lab']})
@@ -156,167 +156,43 @@ class App():
         dynamic_vals = {}
  
         #Load dynamic CSV file
-        if dynamic_CSV_file == 'Original':
-            print('Load Original dynamic CSV')
-            ### Original CSV Code for file dynamic_vals.csv ###
-            try:
-                with open("dependencies/dynamic_vals.csv", encoding="utf8") as data_file:
-                    print('\nloading dynamic_vals')
-                    data = csv.reader(data_file)
-                    dynamic_headers = next(data)[1:]
-                    #print(dynamic_headers)
-                    for row in data:
-                        temp_dict = {}
-                        name = row[0]
-                        values = []
- 
-                        for x in row[1:]:
-                            values.append(x)
- 
-                        for i in range(len(values)):
-                            if values[i]:
-                                temp_dict[dynamic_headers[i]] = values[i]
- 
-                        Original_dynamic_vals[name] = temp_dict
- 
-                with open("dependencies/dynamic_vals.csv", encoding="utf8") as f:
-                    csv_dynamic_= csv.DictReader(f)
-                    for line in csv_dynamic_:
-                    
-                        if(line['Milestone']):
-                            temp=line['Milestone']
-                            MS_options.append(temp[0] + '.' + temp[1])
- 
-                        if(line['Version']):                        
-                            dynamicver = line['Version']
-                            print('dynamicver: ', dynamicver)
- 
-                dynamic_vals = Original_dynamic_vals.copy()
-                dynamic_vals_open=True
-            except:
-                dynamic_vals_open=False
- 
-            print('dynamic_vals_open= ' + str(dynamic_vals_open))
- 
- 
-        if dynamic_CSV_file == 'PO':
-            print('Load PO Track dynamic CSV File')
-            ### PO Track CSV Code for file dynamic_vals.csv ###
-            try:
-                with open("dependencies/dynamic_vals_po.csv", encoding="utf8") as data_file:
-                    data = csv.reader(data_file)
-                    dynamic_headers = next(data)[1:]
-                    for row in data:
-                        temp_dict = {}
-                        name = row[0]
-                        values = []
- 
-                        for x in row[1:]:
-                            values.append(x)
- 
-                        for i in range(len(values)):
-                            if values[i]:
-                                temp_dict[dynamic_headers[i]] = values[i]
- 
-                        dynamic_vals[name] = temp_dict
-                         
-                with open("dependencies/dynamic_vals_po.csv", encoding="utf8") as f:
-                    csv_dynamic_= csv.DictReader(f)
-                    for line in csv_dynamic_:
-                        if(line['Version']):                        
-                            dynamicver = line['Version']
-                            print('dynamicver: ', dynamicver)
- 
-                    for key in dynamic_vals.keys():
-                        l_MS_options.append(key[0] + '.' + key[1])
-                    
-                    #print('l_MS_options: ',l_MS_options)
-                    MS_options=sorted([*set(l_MS_options)])
-                    #print('MS_options: ',MS_options)
-                dynamic_vals_open=True
-            except:
-                print('Did not load dynamic_vals_po')
-                dynamic_vals_open=False
- 
- 
- 
-        if dynamic_CSV_file == 'VV':
-            print('Load VV Track dynamic CSV File')
-            ### VV Track CSV Code for file dynamic_vals.csv ###
-            try:
-                with open("dependencies/dynamic_vals_vv.csv", encoding="utf8") as data_file:
-                    print('\nloading PO track dynamic_vals')
-                    data = csv.reader(data_file)
-                    dynamic_headers = next(data)[1:]
-                    for row in data:
-                        temp_dict = {}
-                        name = row[0]
-                        values = []
- 
-                        for x in row[1:]:
-                            values.append(x)
- 
-                        for i in range(len(values)):
-                            if values[i]:
-                                temp_dict[dynamic_headers[i]] = values[i]
- 
-                        dynamic_vals[name] = temp_dict
- 
-                with open("dependencies/dynamic_vals_po.csv", encoding="utf8") as f:
-                    csv_dynamic_= csv.DictReader(f)
-                    for line in csv_dynamic_:
-                        if(line['Version']):                        
-                            dynamicver = line['Version']
-                            print('dynamicver: ', dynamicver)
- 
-                    for key in dynamic_vals.keys():
-                            l_MS_options.append(key[0] + '.' + key[1])
- 
-                    MS_options=sorted([*set(l_MS_options)])
- 
-                dynamic_vals_open=True
-            except:
-                print('Did not load dynamic_vals_vv')
-                dynamic_vals_open=False
+        print('Load NEW Track dynamic CSV File')
+        ### NEW Track CSV Code for file dynamic_vals.csv ###
+        try:
+            with open("dependencies/dynamic_vals_new.csv", encoding="utf8") as data_file:
+                print('\nloading NEW track dynamic_vals')
+                data = csv.reader(data_file)
+                dynamic_headers = next(data)[1:]            
+                for row in data:
+                    temp_dict = {}
+                    name = row[0]
+                    values = []
 
-        if dynamic_CSV_file == 'NEW':
-            print('Load NEW Track dynamic CSV File')
-            ### NEW Track CSV Code for file dynamic_vals.csv ###
-            try:
-                with open("dependencies/dynamic_vals_new.csv", encoding="utf8") as data_file:
-                    print('\nloading NEW track dynamic_vals')
-                    data = csv.reader(data_file)
-                    dynamic_headers = next(data)[1:]            
-                    for row in data:
-                        temp_dict = {}
-                        name = row[0]
-                        values = []
- 
-                        for x in row[1:]:
-                            values.append(x)
- 
-                        for i in range(len(values)):
-                            if values[i]:
-                                temp_dict[dynamic_headers[i]] = values[i]
- 
-                        dynamic_vals[name] = temp_dict
-                     
-                with open("dependencies/dynamic_vals_new.csv", encoding="utf8") as f:
-                    csv_dynamic_= csv.DictReader(f)
-                    for line in csv_dynamic_:
-                        if(line['Version']):                        
-                            dynamicver = line['Version']
-                            print('dynamicver: ', dynamicver)
- 
-                    for key in dynamic_vals.keys():
-                            l_MS_options.append(key[0] + '.' + key[1])
- 
-                    MS_options=sorted([*set(l_MS_options)])
- 
-                dynamic_vals_open=True
-            except:
-                print('Did not load dynamic_vals_new')
-                dynamic_vals_open=False
+                    for x in row[1:]:
+                        values.append(x)
+
+                    for i in range(len(values)):
+                        if values[i]:
+                            temp_dict[dynamic_headers[i]] = values[i]
+
+                    dynamic_vals[name] = temp_dict
+                    
+            with open("dependencies/dynamic_vals_new.csv", encoding="utf8") as f:
+                csv_dynamic_= csv.DictReader(f)
+                for line in csv_dynamic_:
+                    if(line['Version']):                        
+                        dynamicver = line['Version']
+                        print('dynamicver: ', dynamicver)
+
+                for key in dynamic_vals.keys():
+                        l_MS_options.append(key[0] + '.' + key[1])
+
+                MS_options=sorted([*set(l_MS_options)])
+
+            dynamic_vals_open=True
+        except:
+            print('Did not load dynamic_vals_new')
+            dynamic_vals_open=False
  
  
         #Load static CSV file
@@ -529,759 +405,244 @@ class App():
         #print(dynamic_vals)
         print('')
  
-        if dynamic_CSV_file == "Original":
-            try:
-                var11=tk.IntVar(root)
-                self.CheckBox_11=tk.Checkbutton(root)
-                self.CheckBox_11["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_11["font"] = ft
-                self.CheckBox_11["fg"] = "#333333"
-                self.CheckBox_11["justify"] = "left"
-                self.CheckBox_11["text"] = dynamic_vals["11"]["title"]
-                self.CheckBox_11.place(x=10,y=160,width=490,height=25)
-                self.CheckBox_11["offvalue"] = "0"
-                self.CheckBox_11["onvalue"] = "1"
-                self.CheckBox_11["variable"] = var11
-                self.CheckBox_11.select()
-            except:
-                print("N0 1.1 Milestone")
- 
-            try:
-                var21=IntVar()
-                self.CheckBox_21=tk.Checkbutton(root)
-                self.CheckBox_21["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_21["font"] = ft
-                self.CheckBox_21["fg"] = "#333333"
-                self.CheckBox_21["justify"] = "left"
-                self.CheckBox_21["text"] = dynamic_vals["21"]["title"]
-                self.CheckBox_21.place(x=10,y=190,width=490,height=25)
-                self.CheckBox_21["offvalue"] = "0"
-                self.CheckBox_21["onvalue"] = "1"
-                self.CheckBox_21["variable"] = var21
-                self.CheckBox_21.select()
-            except:
-                print("N0 2.1 Milestone")
-        
-            try:
-                var22=IntVar()
-                self.CheckBox_22=tk.Checkbutton(root)
-                self.CheckBox_22["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_22["font"] = ft
-                self.CheckBox_22["fg"] = "#333333"
-                self.CheckBox_22["justify"] = "left"
-                self.CheckBox_22["text"] = dynamic_vals["22"]["title"]
-                self.CheckBox_22.place(x=10,y=220,width=490,height=25)
-                self.CheckBox_22["offvalue"] = "0"
-                self.CheckBox_22["onvalue"] = "1"
-                self.CheckBox_22["variable"] = var22
-                self.CheckBox_22.select()
-            except:
-                print("N0 2.2 Milestone")
-        
-            try:
-                var31=IntVar()
-                self.CheckBox_31=tk.Checkbutton(root)
-                self.CheckBox_31["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_31["font"] = ft
-                self.CheckBox_31["fg"] = "#333333"
-                self.CheckBox_31["justify"] = "left"
-                self.CheckBox_31["text"] = dynamic_vals["31"]["title"]
-                self.CheckBox_31.place(x=10,y=250,width=490,height=25)
-                self.CheckBox_31["offvalue"] = "0"
-                self.CheckBox_31["onvalue"] = "1"
-                self.CheckBox_31["variable"] = var31
-                self.CheckBox_31.select()
-            except:
-                print("N0 3.1 Milestone")
-        
-            try:
-                var32=IntVar()
-                self.CheckBox_32=tk.Checkbutton(root)
-                self.CheckBox_32["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_32["font"] = ft
-                self.CheckBox_32["fg"] = "#333333"
-                self.CheckBox_32["justify"] = "left"
-                self.CheckBox_32["text"] = dynamic_vals["32"]["title"]
-                self.CheckBox_32.place(x=10,y=280,width=490,height=25)
-                self.CheckBox_32["offvalue"] = "0"
-                self.CheckBox_32["onvalue"] = "1"
-                self.CheckBox_32["variable"] = var32
-                self.CheckBox_32.select()
-            except:
-                print("N0 3.2 Milestone")
- 
-            try:
-                var41=IntVar()
-                self.CheckBox_41=tk.Checkbutton(root)
-                self.CheckBox_41["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_41["font"] = ft
-                self.CheckBox_41["fg"] = "#333333"
-                self.CheckBox_41["justify"] = "left"
-                self.CheckBox_41["text"] = dynamic_vals["41"]["title"]
-                self.CheckBox_41.place(x=10,y=310,width=490,height=25)
-                self.CheckBox_41["offvalue"] = "0"
-                self.CheckBox_41["onvalue"] = "1"
-                self.CheckBox_41["variable"] = var41
-                self.CheckBox_41.select()
-            except:
-                print("N0 4.1 Milestone")
-            try:
-                var42=IntVar()
-                self.CheckBox_42=tk.Checkbutton(root)
-                self.CheckBox_42["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_42["font"] = ft
-                self.CheckBox_42["fg"] = "#333333"
-                self.CheckBox_42["justify"] = "left"
-                self.CheckBox_42["text"] = dynamic_vals["42"]["title"]
-                self.CheckBox_42.place(x=10,y=340,width=490,height=25)
-                self.CheckBox_42["offvalue"] = "0"
-                self.CheckBox_42["onvalue"] = "1"
-                self.CheckBox_42["variable"] = var42
-                self.CheckBox_42.select()
-            except:
-                print("N0 4.2 Milestone")
-        
-            try:
-                var43=IntVar()
-                self.CheckBox_43=tk.Checkbutton(root)
-                self.CheckBox_43["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_43["font"] = ft
-                self.CheckBox_43["fg"] = "#333333"
-                self.CheckBox_43["justify"] = "left"
-                self.CheckBox_43["text"] = dynamic_vals["43"]["title"]
-                self.CheckBox_43.place(x=10,y=370,width=490,height=25)
-                self.CheckBox_43["offvalue"] = "0"
-                self.CheckBox_43["onvalue"] = "1"
-                self.CheckBox_43["variable"] = var43
-                self.CheckBox_43.select()
-            except:
-                print("N0 4.3 Milestone")
-        
-            try:
-                var51=IntVar()
-                self.CheckBox_51=tk.Checkbutton(root)
-                self.CheckBox_51["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_51["font"] = ft
-                self.CheckBox_51["fg"] = "#333333"
-                self.CheckBox_51["justify"] = "left"
-                self.CheckBox_51["text"] = dynamic_vals["51"]["title"]
-                self.CheckBox_51.place(x=10,y=400,width=490,height=25)
-                self.CheckBox_51["offvalue"] = "0"
-                self.CheckBox_51["onvalue"] = "1"
-                self.CheckBox_51["variable"] = var51
-                self.CheckBox_51.select()
-            except:
-                print("N0 5.1 Milestone")
-        
-            try:
-                var61=IntVar()
-                self.CheckBox_61=tk.Checkbutton(root)
-                self.CheckBox_61["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_61["font"] = ft
-                self.CheckBox_61["fg"] = "#333333"
-                self.CheckBox_61["justify"] = "left"
-                self.CheckBox_61["text"] = dynamic_vals["61"]["title"]
-                self.CheckBox_61.place(x=10,y=430,width=490,height=25)
-                self.CheckBox_61["offvalue"] = "0"
-                self.CheckBox_61["onvalue"] = "1"
-                self.CheckBox_61["variable"] = var61
-                self.CheckBox_61.select()
-            except:
-                print("N0 6.1 Milestone")
-        
-            try:
-                var62=IntVar()
-                self.CheckBox_62=tk.Checkbutton(root)
-                self.CheckBox_62["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_62["font"] = ft
-                self.CheckBox_62["fg"] = "#333333"
-                self.CheckBox_62["justify"] = "left"
-                self.CheckBox_62["text"] = dynamic_vals["62"]["title"]
-                self.CheckBox_62.place(x=10,y=460,width=490,height=25)
-                self.CheckBox_62["offvalue"] = "0"
-                self.CheckBox_62["onvalue"] = "1"
-                self.CheckBox_62["variable"] = var62
-                self.CheckBox_62.select()
-            except:
-                print("N0 6.2 Milestone")
-        
-            try:
-                var63=IntVar()
-                self.CheckBox_63=tk.Checkbutton(root)
-                self.CheckBox_63["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_63["font"] = ft
-                self.CheckBox_63["fg"] = "#333333"
-                self.CheckBox_63["justify"] = "left"
-                self.CheckBox_63["text"] = dynamic_vals["63"]["title"]
-                self.CheckBox_63.place(x=10,y=490,width=490,height=25)
-                self.CheckBox_63["offvalue"] = "0"
-                self.CheckBox_63["onvalue"] = "1"
-                self.CheckBox_63["variable"] = var63
-                self.CheckBox_63.select()
-            except:
-                print("N0 6.3 Milestone")
-                    
-            try:
-                var71=IntVar()
-                self.CheckBox_71=tk.Checkbutton(root)
-                self.CheckBox_71["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_71["font"] = ft
-                self.CheckBox_71["fg"] = "#333333"
-                self.CheckBox_71["justify"] = "left"
-                self.CheckBox_71["text"] = dynamic_vals["71"]["title"]
-                self.CheckBox_71.place(x=10,y=520,width=490,height=25)
-                self.CheckBox_71["offvalue"] = "0"
-                self.CheckBox_71["onvalue"] = "1"
-                self.CheckBox_71["variable"] = var71
-                self.CheckBox_71.select()
-            except:
-                print("No 7.1 Milestone")
-        
-            try:
-                var81=IntVar()
-                self.CheckBox_81=tk.Checkbutton(root)
-                self.CheckBox_81["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_81["font"] = ft
-                self.CheckBox_81["fg"] = "#333333"
-                self.CheckBox_81["justify"] = "left"
-                self.CheckBox_81["text"] = dynamic_vals["81"]["title"]
-                self.CheckBox_81.place(x=10,y=550,width=490,height=25)
-                self.CheckBox_81["offvalue"] = "0"
-                self.CheckBox_81["onvalue"] = "1"
-                self.CheckBox_81["variable"] = var81
-                self.CheckBox_81.select()
-            except:
-                print("No 8.1 Milestone")
- 
-            try:
-                var91=IntVar()
-                self.CheckBox_91=tk.Checkbutton(root)
-                self.CheckBox_91["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_91["font"] = ft
-                self.CheckBox_91["fg"] = "#333333"
-                self.CheckBox_91["justify"] = "left"
-                self.CheckBox_91["text"] = dynamic_vals["91"]["title"]
-                self.CheckBox_91.place(x=10,y=580,width=490,height=25)
-                self.CheckBox_91["offvalue"] = "0"
-                self.CheckBox_91["onvalue"] = "1"
-                self.CheckBox_91["variable"] = var91
-                self.CheckBox_91.select()
-            except:
-                print("No 9.1 Milestone")
+        try:
+            var11=tk.IntVar(root)
+            self.CheckBox_11=tk.Checkbutton(root)
+            self.CheckBox_11["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_11["font"] = ft
+            self.CheckBox_11["fg"] = "#333333"
+            self.CheckBox_11["justify"] = "left"
+            self.CheckBox_11["text"] = dynamic_vals["112"]["cb_title"]
+            self.CheckBox_11.place(x=10,y=160,width=490,height=25)
+            self.CheckBox_11["offvalue"] = "0"
+            self.CheckBox_11["onvalue"] = "1"
+            self.CheckBox_11["variable"] = var11
+            self.CheckBox_11.select()
+        except:
+            print("No 1.1 Milestone")
 
-        ###NEW TRACK
+        try:
+            var21=IntVar()
+            self.CheckBox_21=tk.Checkbutton(root)
+            self.CheckBox_21["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_21["font"] = ft
+            self.CheckBox_21["fg"] = "#333333"
+            self.CheckBox_21["justify"] = "left"
+            self.CheckBox_21["text"] = dynamic_vals["212"]["cb_title"]
+            self.CheckBox_21.place(x=10,y=190,width=490,height=25)
+            self.CheckBox_21["offvalue"] = "0"
+            self.CheckBox_21["onvalue"] = "1"
+            self.CheckBox_21["variable"] = var21
+            self.CheckBox_21.select()
+        except:
+            print("N0 2.1 Milestone")
+    
+        try:
+            var22=IntVar()
+            self.CheckBox_22=tk.Checkbutton(root)
+            self.CheckBox_22["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_22["font"] = ft
+            self.CheckBox_22["fg"] = "#333333"
+            self.CheckBox_22["justify"] = "left"
+            self.CheckBox_22["text"] = dynamic_vals["224"]["cb_title"]
+            self.CheckBox_22.place(x=10,y=220,width=490,height=25)
+            self.CheckBox_22["offvalue"] = "0"
+            self.CheckBox_22["onvalue"] = "1"
+            self.CheckBox_22["variable"] = var22
+            self.CheckBox_22.select()
+        except:
+            print("N0 2.2 Milestone")
+    
+        try:
+            var31=IntVar()
+            self.CheckBox_31=tk.Checkbutton(root)
+            self.CheckBox_31["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_31["font"] = ft
+            self.CheckBox_31["fg"] = "#333333"
+            self.CheckBox_31["justify"] = "left"
+            self.CheckBox_31["text"] = dynamic_vals["311"]["cb_title"]
+            self.CheckBox_31.place(x=10,y=250,width=490,height=25)
+            self.CheckBox_31["offvalue"] = "0"
+            self.CheckBox_31["onvalue"] = "1"
+            self.CheckBox_31["variable"] = var31
+            self.CheckBox_31.select()
+        except:
+            print("N0 3.1 Milestone")
+    
+        try:
+            var32=IntVar()
+            self.CheckBox_32=tk.Checkbutton(root)
+            self.CheckBox_32["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_32["font"] = ft
+            self.CheckBox_32["fg"] = "#333333"
+            self.CheckBox_32["justify"] = "left"
+            self.CheckBox_32["text"] = dynamic_vals["321"]["cb_title"]
+            self.CheckBox_32.place(x=10,y=280,width=490,height=25)
+            self.CheckBox_32["offvalue"] = "0"
+            self.CheckBox_32["onvalue"] = "1"
+            self.CheckBox_32["variable"] = var32
+            self.CheckBox_32.select()
+        except:
+            print("N0 3.2 Milestone")
 
-        elif dynamic_CSV_file == "NEW":
-            try:
-                var11=tk.IntVar(root)
-                self.CheckBox_11=tk.Checkbutton(root)
-                self.CheckBox_11["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_11["font"] = ft
-                self.CheckBox_11["fg"] = "#333333"
-                self.CheckBox_11["justify"] = "left"
-                self.CheckBox_11["text"] = dynamic_vals["112"]["cb_title"]
-                self.CheckBox_11.place(x=10,y=160,width=490,height=25)
-                self.CheckBox_11["offvalue"] = "0"
-                self.CheckBox_11["onvalue"] = "1"
-                self.CheckBox_11["variable"] = var11
-                self.CheckBox_11.select()
-            except:
-                print("No 1.1 Milestone")
- 
-            try:
-                var21=IntVar()
-                self.CheckBox_21=tk.Checkbutton(root)
-                self.CheckBox_21["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_21["font"] = ft
-                self.CheckBox_21["fg"] = "#333333"
-                self.CheckBox_21["justify"] = "left"
-                self.CheckBox_21["text"] = dynamic_vals["212"]["cb_title"]
-                self.CheckBox_21.place(x=10,y=190,width=490,height=25)
-                self.CheckBox_21["offvalue"] = "0"
-                self.CheckBox_21["onvalue"] = "1"
-                self.CheckBox_21["variable"] = var21
-                self.CheckBox_21.select()
-            except:
-                print("N0 2.1 Milestone")
-        
-            try:
-                var22=IntVar()
-                self.CheckBox_22=tk.Checkbutton(root)
-                self.CheckBox_22["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_22["font"] = ft
-                self.CheckBox_22["fg"] = "#333333"
-                self.CheckBox_22["justify"] = "left"
-                self.CheckBox_22["text"] = dynamic_vals["224"]["cb_title"]
-                self.CheckBox_22.place(x=10,y=220,width=490,height=25)
-                self.CheckBox_22["offvalue"] = "0"
-                self.CheckBox_22["onvalue"] = "1"
-                self.CheckBox_22["variable"] = var22
-                self.CheckBox_22.select()
-            except:
-                print("N0 2.2 Milestone")
-        
-            try:
-                var31=IntVar()
-                self.CheckBox_31=tk.Checkbutton(root)
-                self.CheckBox_31["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_31["font"] = ft
-                self.CheckBox_31["fg"] = "#333333"
-                self.CheckBox_31["justify"] = "left"
-                self.CheckBox_31["text"] = dynamic_vals["311"]["cb_title"]
-                self.CheckBox_31.place(x=10,y=250,width=490,height=25)
-                self.CheckBox_31["offvalue"] = "0"
-                self.CheckBox_31["onvalue"] = "1"
-                self.CheckBox_31["variable"] = var31
-                self.CheckBox_31.select()
-            except:
-                print("N0 3.1 Milestone")
-        
-            try:
-                var32=IntVar()
-                self.CheckBox_32=tk.Checkbutton(root)
-                self.CheckBox_32["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_32["font"] = ft
-                self.CheckBox_32["fg"] = "#333333"
-                self.CheckBox_32["justify"] = "left"
-                self.CheckBox_32["text"] = dynamic_vals["321"]["cb_title"]
-                self.CheckBox_32.place(x=10,y=280,width=490,height=25)
-                self.CheckBox_32["offvalue"] = "0"
-                self.CheckBox_32["onvalue"] = "1"
-                self.CheckBox_32["variable"] = var32
-                self.CheckBox_32.select()
-            except:
-                print("N0 3.2 Milestone")
- 
-            try:
-                var41=IntVar()
-                self.CheckBox_41=tk.Checkbutton(root)
-                self.CheckBox_41["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_41["font"] = ft
-                self.CheckBox_41["fg"] = "#333333"
-                self.CheckBox_41["justify"] = "left"
-                self.CheckBox_41["text"] = dynamic_vals["411"]["cb_title"]
-                self.CheckBox_41.place(x=10,y=310,width=490,height=25)
-                self.CheckBox_41["offvalue"] = "0"
-                self.CheckBox_41["onvalue"] = "1"
-                self.CheckBox_41["variable"] = var41
-                self.CheckBox_41.select()
-            except:
-                print("N0 4.1 Milestone")
-            try:
-                var42=IntVar()
-                self.CheckBox_42=tk.Checkbutton(root)
-                self.CheckBox_42["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_42["font"] = ft
-                self.CheckBox_42["fg"] = "#333333"
-                self.CheckBox_42["justify"] = "left"
-                self.CheckBox_42["text"] = dynamic_vals["421"]["cb_title"]
-                self.CheckBox_42.place(x=10,y=340,width=490,height=25)
-                self.CheckBox_42["offvalue"] = "0"
-                self.CheckBox_42["onvalue"] = "1"
-                self.CheckBox_42["variable"] = var42
-                self.CheckBox_42.select()
-            except:
-                print("N0 4.2 Milestone")
-        
-            try:
-                var43=IntVar()
-                self.CheckBox_43=tk.Checkbutton(root)
-                self.CheckBox_43["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_43["font"] = ft
-                self.CheckBox_43["fg"] = "#333333"
-                self.CheckBox_43["justify"] = "left"
-                self.CheckBox_43["text"] = dynamic_vals["431"]["cb_title"]
-                self.CheckBox_43.place(x=10,y=370,width=490,height=25)
-                self.CheckBox_43["offvalue"] = "0"
-                self.CheckBox_43["onvalue"] = "1"
-                self.CheckBox_43["variable"] = var43
-                self.CheckBox_43.select()
-            except:
-                print("N0 4.3 Milestone")
-        
-            try:
-                var51=IntVar()
-                self.CheckBox_51=tk.Checkbutton(root)
-                self.CheckBox_51["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_51["font"] = ft
-                self.CheckBox_51["fg"] = "#333333"
-                self.CheckBox_51["justify"] = "left"
-                self.CheckBox_51["text"] = dynamic_vals["511"]["cb_title"]
-                self.CheckBox_51.place(x=10,y=400,width=490,height=25)
-                self.CheckBox_51["offvalue"] = "0"
-                self.CheckBox_51["onvalue"] = "1"
-                self.CheckBox_51["variable"] = var51
-                self.CheckBox_51.select()
-            except:
-                print("N0 5.1 Milestone")
-        
-            try:
-                var61=IntVar()
-                self.CheckBox_61=tk.Checkbutton(root)
-                self.CheckBox_61["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_61["font"] = ft
-                self.CheckBox_61["fg"] = "#333333"
-                self.CheckBox_61["justify"] = "left"
-                self.CheckBox_61["text"] = dynamic_vals["611"]["cb_title"]
-                self.CheckBox_61.place(x=10,y=430,width=490,height=25)
-                self.CheckBox_61["offvalue"] = "0"
-                self.CheckBox_61["onvalue"] = "1"
-                self.CheckBox_61["variable"] = var61
-                self.CheckBox_61.select()
-            except:
-                print("N0 6.1 Milestone")
-        
-            try:
-                var62=IntVar()
-                self.CheckBox_62=tk.Checkbutton(root)
-                self.CheckBox_62["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_62["font"] = ft
-                self.CheckBox_62["fg"] = "#333333"
-                self.CheckBox_62["justify"] = "left"
-                self.CheckBox_62["text"] = dynamic_vals["621"]["cb_title"]
-                self.CheckBox_62.place(x=10,y=460,width=490,height=25)
-                self.CheckBox_62["offvalue"] = "0"
-                self.CheckBox_62["onvalue"] = "1"
-                self.CheckBox_62["variable"] = var62
-                self.CheckBox_62.select()
-            except:
-                print("N0 6.2 Milestone")
-        
-            try:
-                var71=IntVar()
-                self.CheckBox_71=tk.Checkbutton(root)
-                self.CheckBox_71["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_71["font"] = ft
-                self.CheckBox_71["fg"] = "#333333"
-                self.CheckBox_71["justify"] = "left"
-                self.CheckBox_71["text"] = dynamic_vals["711"]["cb_title"]
-                self.CheckBox_71.place(x=10,y=490,width=490,height=25)
-                self.CheckBox_71["offvalue"] = "0"
-                self.CheckBox_71["onvalue"] = "1"
-                self.CheckBox_71["variable"] = var71
-                self.CheckBox_71.select()
-            except:
-                print("N0 7.1 Milestone")
-        
-        
-            try:
-                var81=IntVar()
-                self.CheckBox_81=tk.Checkbutton(root)
-                self.CheckBox_81["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_81["font"] = ft
-                self.CheckBox_81["fg"] = "#333333"
-                self.CheckBox_81["justify"] = "left"
-                self.CheckBox_81["text"] = dynamic_vals["811"]["cb_title"]
-                self.CheckBox_81.place(x=10,y=520,width=490,height=25)
-                self.CheckBox_81["offvalue"] = "0"
-                self.CheckBox_81["onvalue"] = "1"
-                self.CheckBox_81["variable"] = var81
-                self.CheckBox_81.select()
-            except:
-                print("N0 8.1 Milestone")
- 
-            try:
-                var91=IntVar()
-                self.CheckBox_91=tk.Checkbutton(root)
-                self.CheckBox_91["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_91["font"] = ft
-                self.CheckBox_91["fg"] = "#333333"
-                self.CheckBox_91["justify"] = "left"
-                self.CheckBox_91["text"] = dynamic_vals["911"]["cb_title"]
-                self.CheckBox_91.place(x=10,y=550,width=490,height=25)
-                self.CheckBox_91["offvalue"] = "0"
-                self.CheckBox_91["onvalue"] = "1"
-                self.CheckBox_91["variable"] = var91
-                self.CheckBox_91.select()
-            except:
-                print("No 9.1 Milestone")
-         ###/NEW
-         
-        else: # PO or VV Tickets
-            try:
-                var11=tk.IntVar(root)
-                self.CheckBox_11=tk.Checkbutton(root)
-                self.CheckBox_11["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_11["font"] = ft
-                self.CheckBox_11["fg"] = "#333333"
-                self.CheckBox_11["justify"] = "left"
-                self.CheckBox_11["text"] = dynamic_vals["111"]["cb_title"]
-                self.CheckBox_11.place(x=10,y=160,width=490,height=25)
-                self.CheckBox_11["offvalue"] = "0"
-                self.CheckBox_11["onvalue"] = "1"
-                self.CheckBox_11["variable"] = var11
-                self.CheckBox_11.select()
-            except:
-                print("No 1.1 Milestone")
- 
-            try:
-                var21=IntVar()
-                self.CheckBox_21=tk.Checkbutton(root)
-                self.CheckBox_21["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_21["font"] = ft
-                self.CheckBox_21["fg"] = "#333333"
-                self.CheckBox_21["justify"] = "left"
-                self.CheckBox_21["text"] = dynamic_vals["211"]["cb_title"]
-                self.CheckBox_21.place(x=10,y=190,width=490,height=25)
-                self.CheckBox_21["offvalue"] = "0"
-                self.CheckBox_21["onvalue"] = "1"
-                self.CheckBox_21["variable"] = var21
-                self.CheckBox_21.select()
-            except:
-                print("N0 2.1 Milestone")
-        
-            try:
-                var22=IntVar()
-                self.CheckBox_22=tk.Checkbutton(root)
-                self.CheckBox_22["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_22["font"] = ft
-                self.CheckBox_22["fg"] = "#333333"
-                self.CheckBox_22["justify"] = "left"
-                self.CheckBox_22["text"] = dynamic_vals["221"]["cb_title"]
-                self.CheckBox_22.place(x=10,y=220,width=490,height=25)
-                self.CheckBox_22["offvalue"] = "0"
-                self.CheckBox_22["onvalue"] = "1"
-                self.CheckBox_22["variable"] = var22
-                self.CheckBox_22.select()
-            except:
-                print("N0 2.2 Milestone")
-        
-            try:
-                var31=IntVar()
-                self.CheckBox_31=tk.Checkbutton(root)
-                self.CheckBox_31["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_31["font"] = ft
-                self.CheckBox_31["fg"] = "#333333"
-                self.CheckBox_31["justify"] = "left"
-                self.CheckBox_31["text"] = dynamic_vals["311"]["cb_title"]
-                self.CheckBox_31.place(x=10,y=250,width=490,height=25)
-                self.CheckBox_31["offvalue"] = "0"
-                self.CheckBox_31["onvalue"] = "1"
-                self.CheckBox_31["variable"] = var31
-                self.CheckBox_31.select()
-            except:
-                print("N0 3.1 Milestone")
-        
-            try:
-                var32=IntVar()
-                self.CheckBox_32=tk.Checkbutton(root)
-                self.CheckBox_32["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_32["font"] = ft
-                self.CheckBox_32["fg"] = "#333333"
-                self.CheckBox_32["justify"] = "left"
-                self.CheckBox_32["text"] = dynamic_vals["321"]["cb_title"]
-                self.CheckBox_32.place(x=10,y=280,width=490,height=25)
-                self.CheckBox_32["offvalue"] = "0"
-                self.CheckBox_32["onvalue"] = "1"
-                self.CheckBox_32["variable"] = var32
-                self.CheckBox_32.select()
-            except:
-                print("N0 3.2 Milestone")
- 
-            try:
-                var41=IntVar()
-                self.CheckBox_41=tk.Checkbutton(root)
-                self.CheckBox_41["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_41["font"] = ft
-                self.CheckBox_41["fg"] = "#333333"
-                self.CheckBox_41["justify"] = "left"
-                self.CheckBox_41["text"] = dynamic_vals["411"]["cb_title"]
-                self.CheckBox_41.place(x=10,y=310,width=490,height=25)
-                self.CheckBox_41["offvalue"] = "0"
-                self.CheckBox_41["onvalue"] = "1"
-                self.CheckBox_41["variable"] = var41
-                self.CheckBox_41.select()
-            except:
-                print("N0 4.1 Milestone")
-            try:
-                var42=IntVar()
-                self.CheckBox_42=tk.Checkbutton(root)
-                self.CheckBox_42["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_42["font"] = ft
-                self.CheckBox_42["fg"] = "#333333"
-                self.CheckBox_42["justify"] = "left"
-                self.CheckBox_42["text"] = dynamic_vals["421"]["cb_title"]
-                self.CheckBox_42.place(x=10,y=340,width=490,height=25)
-                self.CheckBox_42["offvalue"] = "0"
-                self.CheckBox_42["onvalue"] = "1"
-                self.CheckBox_42["variable"] = var42
-                self.CheckBox_42.select()
-            except:
-                print("N0 4.2 Milestone")
-        
-            try:
-                var43=IntVar()
-                self.CheckBox_43=tk.Checkbutton(root)
-                self.CheckBox_43["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_43["font"] = ft
-                self.CheckBox_43["fg"] = "#333333"
-                self.CheckBox_43["justify"] = "left"
-                self.CheckBox_43["text"] = dynamic_vals["431"]["cb_title"]
-                self.CheckBox_43.place(x=10,y=370,width=490,height=25)
-                self.CheckBox_43["offvalue"] = "0"
-                self.CheckBox_43["onvalue"] = "1"
-                self.CheckBox_43["variable"] = var43
-                self.CheckBox_43.select()
-            except:
-                print("N0 4.3 Milestone")
-        
-            try:
-                var51=IntVar()
-                self.CheckBox_51=tk.Checkbutton(root)
-                self.CheckBox_51["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_51["font"] = ft
-                self.CheckBox_51["fg"] = "#333333"
-                self.CheckBox_51["justify"] = "left"
-                self.CheckBox_51["text"] = dynamic_vals["511"]["cb_title"]
-                self.CheckBox_51.place(x=10,y=400,width=490,height=25)
-                self.CheckBox_51["offvalue"] = "0"
-                self.CheckBox_51["onvalue"] = "1"
-                self.CheckBox_51["variable"] = var51
-                self.CheckBox_51.select()
-            except:
-                print("N0 5.1 Milestone")
-        
-            try:
-                var61=IntVar()
-                self.CheckBox_61=tk.Checkbutton(root)
-                self.CheckBox_61["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_61["font"] = ft
-                self.CheckBox_61["fg"] = "#333333"
-                self.CheckBox_61["justify"] = "left"
-                self.CheckBox_61["text"] = dynamic_vals["611"]["cb_title"]
-                self.CheckBox_61.place(x=10,y=430,width=490,height=25)
-                self.CheckBox_61["offvalue"] = "0"
-                self.CheckBox_61["onvalue"] = "1"
-                self.CheckBox_61["variable"] = var61
-                self.CheckBox_61.select()
-            except:
-                print("N0 6.1 Milestone")
-        
-            try:
-                var62=IntVar()
-                self.CheckBox_62=tk.Checkbutton(root)
-                self.CheckBox_62["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_62["font"] = ft
-                self.CheckBox_62["fg"] = "#333333"
-                self.CheckBox_62["justify"] = "left"
-                self.CheckBox_62["text"] = dynamic_vals["621"]["cb_title"]
-                self.CheckBox_62.place(x=10,y=460,width=490,height=25)
-                self.CheckBox_62["offvalue"] = "0"
-                self.CheckBox_62["onvalue"] = "1"
-                self.CheckBox_62["variable"] = var62
-                self.CheckBox_62.select()
-            except:
-                print("N0 6.2 Milestone")
-        
-            try:
-                var63=IntVar()
-                self.CheckBox_63=tk.Checkbutton(root)
-                self.CheckBox_63["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_63["font"] = ft
-                self.CheckBox_63["fg"] = "#333333"
-                self.CheckBox_63["justify"] = "left"
-                self.CheckBox_63["text"] = dynamic_vals["631"]["cb_title"]
-                self.CheckBox_63.place(x=10,y=490,width=490,height=25)
-                self.CheckBox_63["offvalue"] = "0"
-                self.CheckBox_63["onvalue"] = "1"
-                self.CheckBox_63["variable"] = var63
-                self.CheckBox_63.select()
-            except:
-                print("N0 6.3 Milestone")
-            
-        
-            try:
-                var71=IntVar()
-                self.CheckBox_71=tk.Checkbutton(root)
-                self.CheckBox_71["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_71["font"] = ft
-                self.CheckBox_71["fg"] = "#333333"
-                self.CheckBox_71["justify"] = "left"
-                self.CheckBox_71["text"] = dynamic_vals["711"]["cb_title"]
-                self.CheckBox_71.place(x=10,y=520,width=490,height=25)
-                self.CheckBox_71["offvalue"] = "0"
-                self.CheckBox_71["onvalue"] = "1"
-                self.CheckBox_71["variable"] = var71
-                self.CheckBox_71.select()
-            except:
-                print("N0 7.1 Milestone")
-        
-        
-            try:
-                var81=IntVar()
-                self.CheckBox_81=tk.Checkbutton(root)
-                self.CheckBox_81["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_81["font"] = ft
-                self.CheckBox_81["fg"] = "#333333"
-                self.CheckBox_81["justify"] = "left"
-                self.CheckBox_81["text"] = dynamic_vals["811"]["cb_title"]
-                self.CheckBox_81.place(x=10,y=550,width=490,height=25)
-                self.CheckBox_81["offvalue"] = "0"
-                self.CheckBox_81["onvalue"] = "1"
-                self.CheckBox_81["variable"] = var81
-                self.CheckBox_81.select()
-            except:
-                print("N0 8.1 Milestone")
- 
-            try:
-                var91=IntVar()
-                self.CheckBox_91=tk.Checkbutton(root)
-                self.CheckBox_91["anchor"] = "w"
-                ft = tkFont.Font(family='Times',size=10)
-                self.CheckBox_91["font"] = ft
-                self.CheckBox_91["fg"] = "#333333"
-                self.CheckBox_91["justify"] = "left"
-                self.CheckBox_91["text"] = dynamic_vals["911"]["cb_title"]
-                self.CheckBox_91.place(x=10,y=580,width=490,height=25)
-                self.CheckBox_91["offvalue"] = "0"
-                self.CheckBox_91["onvalue"] = "1"
-                self.CheckBox_91["variable"] = var91
-                self.CheckBox_91.select()
-            except:
-                print("No 9.1 Milestone")
+        try:
+            var41=IntVar()
+            self.CheckBox_41=tk.Checkbutton(root)
+            self.CheckBox_41["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_41["font"] = ft
+            self.CheckBox_41["fg"] = "#333333"
+            self.CheckBox_41["justify"] = "left"
+            self.CheckBox_41["text"] = dynamic_vals["411"]["cb_title"]
+            self.CheckBox_41.place(x=10,y=310,width=490,height=25)
+            self.CheckBox_41["offvalue"] = "0"
+            self.CheckBox_41["onvalue"] = "1"
+            self.CheckBox_41["variable"] = var41
+            self.CheckBox_41.select()
+        except:
+            print("N0 4.1 Milestone")
+        try:
+            var42=IntVar()
+            self.CheckBox_42=tk.Checkbutton(root)
+            self.CheckBox_42["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_42["font"] = ft
+            self.CheckBox_42["fg"] = "#333333"
+            self.CheckBox_42["justify"] = "left"
+            self.CheckBox_42["text"] = dynamic_vals["421"]["cb_title"]
+            self.CheckBox_42.place(x=10,y=340,width=490,height=25)
+            self.CheckBox_42["offvalue"] = "0"
+            self.CheckBox_42["onvalue"] = "1"
+            self.CheckBox_42["variable"] = var42
+            self.CheckBox_42.select()
+        except:
+            print("N0 4.2 Milestone")
+    
+        try:
+            var43=IntVar()
+            self.CheckBox_43=tk.Checkbutton(root)
+            self.CheckBox_43["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_43["font"] = ft
+            self.CheckBox_43["fg"] = "#333333"
+            self.CheckBox_43["justify"] = "left"
+            self.CheckBox_43["text"] = dynamic_vals["431"]["cb_title"]
+            self.CheckBox_43.place(x=10,y=370,width=490,height=25)
+            self.CheckBox_43["offvalue"] = "0"
+            self.CheckBox_43["onvalue"] = "1"
+            self.CheckBox_43["variable"] = var43
+            self.CheckBox_43.select()
+        except:
+            print("N0 4.3 Milestone")
+    
+        try:
+            var51=IntVar()
+            self.CheckBox_51=tk.Checkbutton(root)
+            self.CheckBox_51["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_51["font"] = ft
+            self.CheckBox_51["fg"] = "#333333"
+            self.CheckBox_51["justify"] = "left"
+            self.CheckBox_51["text"] = dynamic_vals["511"]["cb_title"]
+            self.CheckBox_51.place(x=10,y=400,width=490,height=25)
+            self.CheckBox_51["offvalue"] = "0"
+            self.CheckBox_51["onvalue"] = "1"
+            self.CheckBox_51["variable"] = var51
+            self.CheckBox_51.select()
+        except:
+            print("N0 5.1 Milestone")
+    
+        try:
+            var61=IntVar()
+            self.CheckBox_61=tk.Checkbutton(root)
+            self.CheckBox_61["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_61["font"] = ft
+            self.CheckBox_61["fg"] = "#333333"
+            self.CheckBox_61["justify"] = "left"
+            self.CheckBox_61["text"] = dynamic_vals["611"]["cb_title"]
+            self.CheckBox_61.place(x=10,y=430,width=490,height=25)
+            self.CheckBox_61["offvalue"] = "0"
+            self.CheckBox_61["onvalue"] = "1"
+            self.CheckBox_61["variable"] = var61
+            self.CheckBox_61.select()
+        except:
+            print("N0 6.1 Milestone")
+    
+        try:
+            var62=IntVar()
+            self.CheckBox_62=tk.Checkbutton(root)
+            self.CheckBox_62["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_62["font"] = ft
+            self.CheckBox_62["fg"] = "#333333"
+            self.CheckBox_62["justify"] = "left"
+            self.CheckBox_62["text"] = dynamic_vals["621"]["cb_title"]
+            self.CheckBox_62.place(x=10,y=460,width=490,height=25)
+            self.CheckBox_62["offvalue"] = "0"
+            self.CheckBox_62["onvalue"] = "1"
+            self.CheckBox_62["variable"] = var62
+            self.CheckBox_62.select()
+        except:
+            print("N0 6.2 Milestone")
+    
+        try:
+            var71=IntVar()
+            self.CheckBox_71=tk.Checkbutton(root)
+            self.CheckBox_71["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_71["font"] = ft
+            self.CheckBox_71["fg"] = "#333333"
+            self.CheckBox_71["justify"] = "left"
+            self.CheckBox_71["text"] = dynamic_vals["711"]["cb_title"]
+            self.CheckBox_71.place(x=10,y=490,width=490,height=25)
+            self.CheckBox_71["offvalue"] = "0"
+            self.CheckBox_71["onvalue"] = "1"
+            self.CheckBox_71["variable"] = var71
+            self.CheckBox_71.select()
+        except:
+            print("N0 7.1 Milestone")
+    
+    
+        try:
+            var81=IntVar()
+            self.CheckBox_81=tk.Checkbutton(root)
+            self.CheckBox_81["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_81["font"] = ft
+            self.CheckBox_81["fg"] = "#333333"
+            self.CheckBox_81["justify"] = "left"
+            self.CheckBox_81["text"] = dynamic_vals["811"]["cb_title"]
+            self.CheckBox_81.place(x=10,y=520,width=490,height=25)
+            self.CheckBox_81["offvalue"] = "0"
+            self.CheckBox_81["onvalue"] = "1"
+            self.CheckBox_81["variable"] = var81
+            self.CheckBox_81.select()
+        except:
+            print("N0 8.1 Milestone")
+
+        try:
+            var91=IntVar()
+            self.CheckBox_91=tk.Checkbutton(root)
+            self.CheckBox_91["anchor"] = "w"
+            ft = tkFont.Font(family='Times',size=10)
+            self.CheckBox_91["font"] = ft
+            self.CheckBox_91["fg"] = "#333333"
+            self.CheckBox_91["justify"] = "left"
+            self.CheckBox_91["text"] = dynamic_vals["911"]["cb_title"]
+            self.CheckBox_91.place(x=10,y=550,width=490,height=25)
+            self.CheckBox_91["offvalue"] = "0"
+            self.CheckBox_91["onvalue"] = "1"
+            self.CheckBox_91["variable"] = var91
+            self.CheckBox_91.select()
+        except:
+            print("No 9.1 Milestone")
+        ###/NEW
  
         var101=IntVar()
         self.CheckBox_101=tk.Checkbutton(root)
@@ -1464,7 +825,7 @@ class App():
                     }
             else:
                 milestone_eta = fields["milestone_eta"]
-                print('Perduction Mode')
+                print('Production Mode')
                 lab = fields['lab']
                 payload = {
                     "subject": subject,
@@ -1631,7 +992,7 @@ class App():
                         checkbox_dict.update({"71":int(var71.get())})
                         checkbox_dict.update({"81":int(var81.get())})
                         checkbox_dict.update({"91":int(var91.get())})
-                    else: # PO and VV Tickets
+                    else: # PO and VV Tickets Also default for "New"
                         checkbox_dict.update({"111":int(var11.get())})
                         checkbox_dict.update({"211":int(var21.get())})
                         checkbox_dict.update({"221":int(var22.get())})
@@ -1721,19 +1082,9 @@ class App():
                                 _service_sub_type["service_sub_type"]=static_vals.get("service_sub_type")
  
                                 _survey_comment={}
-                                if dynamic_CSV_file == 'Original':
-                                    _survey_comment["survey_comment"]=static_vals.get("survey_comment")
-                                if dynamic_CSV_file == 'PO':
-                                    _survey_comment["survey_comment"]=static_vals.get("survey_comment_PO")
-                                if dynamic_CSV_file == 'VV':
-                                    _survey_comment["survey_comment"]=static_vals.get("survey_comment_VV")
-                                if dynamic_CSV_file == 'NEW':
-                                    #
-                                    # Add code to change value based on milestone
-                                    #
-                                    print(dynamic_vals[milestone]["ticket"])
-                                    _survey_comment["survey_comment"]=static_vals.get("survey_comment")
- 
+
+                                print(dynamic_vals[milestone]["ticket"])
+                                _survey_comment["survey_comment"]=static_vals.get("survey_comment")
  
                                 _lab={'lab': selected_lab}
  
@@ -1759,7 +1110,6 @@ class App():
                                 line_dict.update(_required_by_milestone)
                                 line_dict.update(_survey_comment)
                                 line_dict.update(_lab)
- 
                                 fieldlist.append(line_dict)
  
                     if var101.get() == 1: #create advance tickets
@@ -1881,42 +1231,33 @@ class App():
                             _service_sub_type["service_sub_type"]=static_vals.get("service_sub_type")
  
                             _survey_comment={}
-                            if dynamic_CSV_file == 'Original':
-                                _survey_comment["survey_comment"]=static_vals.get("survey_comment")
-                            if dynamic_CSV_file == 'PO':
-                                _survey_comment["survey_comment"]=static_vals.get("survey_comment_PO")
-                            if dynamic_CSV_file == 'VV':
-                                _survey_comment["survey_comment"]=static_vals.get("survey_comment_VV")
-                            if dynamic_CSV_file == 'NEW':
-                                _survey_comment["survey_comment"]=static_vals.get("survey_comment")
-                            
- 
-                            _lab={'lab': selected_lab}
- 
-                            _notify={'notify': selected_notify}
-                            
-                            line_dict={}
-                            line_dict.update(_title)
-                            line_dict.update(_description)
-                            line_dict.update(_lab_org)
-                            line_dict.update(_org_unit)
-                            line_dict.update(_category)
-                            line_dict.update(_component)
-                            line_dict.update(_priority)
-                            line_dict.update(_status)
-                            line_dict.update(_reason)
-                            line_dict.update(_customer_contact)
-                            line_dict.update(_notify)
-                            line_dict.update(_site)
-                            line_dict.update(_program)
-                            line_dict.update(_milestone_eta)
-                            line_dict.update(_service_type)
-                            line_dict.update(_service_sub_type)
-                            line_dict.update(_required_by_milestone)
-                            line_dict.update(_survey_comment)
-                            line_dict.update(_lab)
- 
-                            fieldlist.append(line_dict)
+
+                        _survey_comment["survey_comment"]=static_vals.get("survey_comment")
+                        _lab={'lab': selected_lab}
+                        _notify={'notify': selected_notify}
+                        
+                        line_dict={}
+                        line_dict.update(_title)
+                        line_dict.update(_description)
+                        line_dict.update(_lab_org)
+                        line_dict.update(_org_unit)
+                        line_dict.update(_category)
+                        line_dict.update(_component)
+                        line_dict.update(_priority)
+                        line_dict.update(_status)
+                        line_dict.update(_reason)
+                        line_dict.update(_customer_contact)
+                        line_dict.update(_notify)
+                        line_dict.update(_site)
+                        line_dict.update(_program)
+                        line_dict.update(_milestone_eta)
+                        line_dict.update(_service_type)
+                        line_dict.update(_service_sub_type)
+                        line_dict.update(_required_by_milestone)
+                        line_dict.update(_survey_comment)
+                        line_dict.update(_lab)
+
+                        fieldlist.append(line_dict)
  
                     #********************
                     print("")
