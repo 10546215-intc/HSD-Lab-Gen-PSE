@@ -19,6 +19,11 @@ import os
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.environ["no_proxy"] = "127.0.0.1,localhost,intel.com"
 #headers = { 'Content-type': 'application/json' }
+
+
+url_Prod = "https://hsdes-api.intel.com/"
+url_Pre = "https://hsdes-api-pre.intel.com/"
+
  
 vernum = "0.977" #application version number
 configver = "" #config version number
@@ -83,8 +88,10 @@ class App():
                 hsdcheck=False
     
             for i in response.json()["data"]:
+                #print(value, ':', isvalid)
                 if value.lower() in i[field]:
                     isvalid = True
+    
                 #print(value, ':', isvalid)Validate 
             return isvalid
  
@@ -148,11 +155,11 @@ class App():
         #dynamic_CSV_file = "VV" #Options: 'Original' 'PO' 'VV' 'NEW'
         dynamic_CSV_file = 'NEW'
  
-        Original_dynamic_vals = {}
-        PO_dynamic_vals = {}
-        PO_dict_exist = True
-        VV_dynamic_vals = {}
-        VV_dict_exist = True
+     #orignal   Original_dynamic_vals = {}
+     #orignal   PO_dynamic_vals = {}
+     #orignal   PO_dict_exist = True
+     #orignal   VV_dynamic_vals = {}
+     #orignal   VV_dict_exist = True
         dynamic_vals = {}
  
         #Load dynamic CSV file
@@ -162,13 +169,17 @@ class App():
             with open("dependencies/dynamic_vals_new.csv", encoding="utf8") as data_file:
                 print('\nloading NEW track dynamic_vals')
                 data = csv.reader(data_file)
-                dynamic_headers = next(data)[1:]            
+                dynamic_headers = next(data)[0:]                    
+#orig                dynamic_headers = next(data)[1:]            
                 for row in data:
                     temp_dict = {}
-                    name = row[0]
+                    keystone = row[0]
+                    name = row[1]
+ #                   name = row[0]
                     values = []
 
-                    for x in row[1:]:
+#                    for x in row[1:]:
+                    for x in row[0:]:    
                         values.append(x)
 
                     for i in range(len(values)):
@@ -195,7 +206,7 @@ class App():
             dynamic_vals_open=False
  
  
-        #Load static CSV file
+        #Load static CSV file Gets version from dynamic_vals_new file
         static_vals = {}
         try:
             with open("dependencies/static_vals.csv", encoding="utf8") as f:
@@ -259,15 +270,10 @@ class App():
             i += 1
  
         #Get the Date
- ##       from datetime import date
         today = datetime.date.today()
         iso_calendar = today.isocalendar()
         WorkWeek = iso_calendar[1]
- #       WorkWeek = today.isocalendar().week
         year = iso_calendar[0]
-#        year = today.year
-        
- 
         WorkWeekValue_Inside = tk.StringVar(root)
         YearValue_Inside = tk.StringVar(root)
  
@@ -401,7 +407,8 @@ class App():
         self.CheckBox_SelectAll["variable"] = self.varSelectAll
         self.CheckBox_SelectAll.select()
  
- 
+ ########################################################################################
+ #########  Create milestone check boxes
         #print(dynamic_vals)
         print('')
  
@@ -656,6 +663,7 @@ class App():
         self.CheckBox_101["variable"] = var101
         self.CheckBox_101["command"] = AdvancedCheck
         self.CheckBox_101.setvar = False
+     ############################################################################################################################################
         
         #Program Label
         Label_Program=tk.Label(root)
@@ -764,7 +772,8 @@ class App():
             send_mail = "false"
  
             if pre_production == "TRUE":
-                lab = "JF4-4108 (Debug Lab)"
+#orig                lab = "JF4-4108 (Debug Lab)"
+                lab = fields['lab']
                 print('Pre-Perduction Mode')
                 payload = {
                     "subject": subject,
@@ -1067,10 +1076,11 @@ class App():
  
                                 _milestone_eta={}
                                 d = YearValue_Inside.get()+WorkWeekValue_Inside.get()
-                                r = datetime.strptime(d + '-1', "%Y%W-%w")
+                                r = datetime.datetime.strptime(d + '-1', "%Y%W-%w")
                                 x = r - timedelta(weeks = int(dynamic_vals[milestone]["ETA_WW"]))
-                                year = str(x.isocalendar().year)
-                                week = str(x.isocalendar().week).zfill(2)
+                                year = str(x.isocalendar()[0])
+                                week = str(x.isocalendar()[1]).zfill(2)
+                       #         week = str(x.isocalendar().week).zfill(2)
                                 milestoneww = (year + week)
                                 _milestone_eta["milestone_eta"]=milestoneww
                                 print("milestoneww = "+milestoneww + "milestone = "+milestone)
@@ -1288,7 +1298,7 @@ class App():
                             Button_Create["state"] = "disabled"
                             app.ticketInterval = app.ticketInterval +1
                             #----------------------------------------------------------
-                            #response = postnewHSD(fields) #Uncomment to create tickets
+                            response = postnewHSD(fields) #Uncomment to create tickets
                             #----------------------------------------------------------
                             print('ticket_number',ticket_number)
  
