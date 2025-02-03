@@ -14,15 +14,20 @@ import requests
 from requests_kerberos import HTTPKerberosAuth
 import urllib3
 import os
+import customtkinter
  
 # this is to ignore the ssl insecure warning as we are passing in 'verify=false'
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.environ["no_proxy"] = "127.0.0.1,localhost,intel.com"
 #headers = { 'Content-type': 'application/json' }
 
+# Declare global variables
+url = ""
+linkUrl = ""
+icon = ""
 
-url_Prod = "https://hsdes-api.intel.com/"
-url_Pre = "https://hsdes-api-pre.intel.com/"
+#url_Prod = "https://hsdes-api.intel.com/"
+#url_Pre = "https://hsdes-api-pre.intel.com/"
 
  
 vernum = "0.977" #application version number
@@ -38,10 +43,9 @@ class App():
     def __init__(self, root):
         root.title("HSD-Lab Gen - Version " + str(vernum))
         root.eval("tk::PlaceWindow . center")
- 
         #setting window size
         width=492
-        height=680
+        height=740
         screenwidth = root.winfo_screenwidth()
         screenheight = root.winfo_screenheight()
         alignstr = '%dx%d+%d+%d' % (width, height, (screenwidth - width) / 2, (screenheight - height) / 2)
@@ -59,21 +63,68 @@ class App():
         #UpdateIcon()
  
         #Set Size for GUI
-        cv = Canvas(root,width=892,height=680)
+        cv = Canvas(root,width=892,height=740)
         cv.pack()
-        cv.create_rectangle(2,2,485,90,fill=menu_color)
-        cv.create_line(165,2,165,90)
-        cv.create_line(326,2,326,90)
+        cv.create_rectangle(2,38,485,126,fill=menu_color)
+        cv.create_line(165,38,165,126)
+        cv.create_line(326,38,326,126)
+
+        # Create Switch Function for Production/Pre-Production
+        #Switch Label and assign hsd_mode Http address.
+        def get_hsd_url():
+            global url
+            global linkUrl
+            global icon
+            global test
+            
+            if switch_var.get() == "Pre-Prod":
+                mode_label.configure(text="Pre-Production (HSD)")
+                url = 'https://hsdes-api-pre.intel.com/rest/article'
+                linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
+                icon = 'dependencies/Y.png'
+            else:
+                mode_label.configure(text="Production (HSD)")
+                url = 'https://hsdes-api.intel.com/rest/article'
+                linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
+                icon = 'dependencies/B.png'
+            UpdateIcon()
+
+        # Create Toggle function
+        def clicker():
+            mode_switch.toggle()
+
+        # Create a StringVar
+        switch_var = customtkinter.StringVar(value="Pre-Prod")
+
+        # Create Switch
+        mode_switch = customtkinter.CTkSwitch(root, text="", command=get_hsd_url,
+                                            variable=switch_var, onvalue="Pre-Prod", offvalue="Prod",
+                                            switch_width=20,
+                                            switch_height=10,
+                                            font=("Times", 24),
+                                            text_color="blue",
+                                            state="normal",
+                                            )
+
+        # Create Label
+        mode_label = customtkinter.CTkLabel(root, text="Pre-Production", font=("Times", 24), text_color="blue")
+
+        # Place the label and switch
+        mode_label.place(relx=0.5, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
+        mode_switch.place(relx=1, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
+ 
  
         #ProgressSuccess Label
         Label_ProgressSuccess=tk.Label(root)
-        ft = tkFont.Font(family='Times',size=14)
+        ft = tkFont.Font(family='Times',size=18)
         Label_ProgressSuccess["font"] = ft
         Label_ProgressSuccess["fg"] = "#333333"
         Label_ProgressSuccess["justify"] = "left"
         Label_ProgressSuccess["text"] = ""
         Label_ProgressSuccess.place(x=0,y=340,width=492,height=20)
- 
+
+        get_hsd_url()
+#### Update to populate pulldowns from query, to be removed after 
         #Validate field aginist HSD-ES DB
         hsdcheck = True
         def validateField(field, value):
@@ -246,21 +297,24 @@ class App():
             close()
  
         clipboard = static_vals['createClipboard']
+
+### Sets production http can be removed.
+
  
         pre_production = static_vals['pre_production']
-        print('pre_production =', pre_production)
+#        print('pre_production =', pre_production)
  
-        if pre_production == "TRUE":
-            url = 'https://hsdes-api-pre.intel.com/rest/article'
-            linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
-            icon = 'dependencies/Y.png'
-            print('pre_production mode')
-        else:
-            url = 'https://hsdes-api.intel.com/rest/article'
-            linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
-            icon = 'dependencies/B.png'
-            print('production mode')
-        UpdateIcon()
+        # if pre_production == "TRUE":
+        #     url = 'https://hsdes-api-pre.intel.com/rest/article'
+        #     linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
+        #     icon = 'dependencies/Y.png'
+        #     print('pre_production mode')
+        # else:
+        #     url = 'https://hsdes-api.intel.com/rest/article'
+        #     linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
+        #     icon = 'dependencies/B.png'
+        #     print('production mode')
+        # UpdateIcon()
  
         #Create List for WorkWeek OptionMenu
         i = 1
@@ -283,24 +337,82 @@ class App():
         for i in range(2021,2051):
             YearList.insert(i,i)
             i += 1
- 
+
+        # Create Pulldown OptionMenu boxes with tooltips
         project_options_267=ttk.OptionMenu(root,project_option_selected,*project_options)
         project_options_267['tooltip'] = 'Choose program / project.'
-        project_options_267.place(x=10,y=33,width=150,height=25)
+        project_options_267.place(x=10,y=69,width=150,height=25)
  
         site_options267=ttk.OptionMenu(root,site_option_selected,*sites_options)
         site_options267['tooltip'] = 'Choose Site.'
-        site_options267.place(x=168,y=33,width=150,height=25)
+        site_options267.place(x=168,y=69,width=150,height=25)
         
         Option_101=ttk.OptionMenu(root,WorkWeekValue_Inside,*WorkWeekList)
         Option_101['tooltip'] = 'Choose todays known work week for power on.'
-        Option_101.place(x=400,y=33,width=80,height=25)
+        Option_101.place(x=400,y=69,width=80,height=25)
         WorkWeekValue_Inside.set(WorkWeek)
  
         Option_403=ttk.OptionMenu(root,YearValue_Inside,*YearList)
         Option_403['tooltip'] = 'Choose todays known year for power on.'
-        Option_403.place(x=400,y=63,width=80,height=25)
+        Option_403.place(x=400,y=99,width=80,height=25)
         YearValue_Inside.set(year)
+ 
+        # Create labels for pulldown Boxes
+        #Program Label
+        Label_Program=tk.Label(root)
+        Label_Program["anchor"] = "c"
+        ft = tkFont.Font(family='Times',size=14)
+        Label_Program["font"] = ft
+        Label_Program["fg"] = "#333333"
+        Label_Program["justify"] = "left"
+        Label_Program["text"] = "Program"
+        Label_Program["background"] = menu_color
+        Label_Program.place(x=10,y=41,width=150,height=25)
+ 
+        #Site Label
+        Label_Site=tk.Label(root)
+        Label_Site["anchor"] = "c"
+        ft = tkFont.Font(family='Times',size=14)
+        Label_Site["font"] = ft
+        Label_Site["fg"] = "#333333"
+        Label_Site["justify"] = "center"
+        Label_Site["text"] = "Site"
+        Label_Site["background"] = menu_color
+        Label_Site.place(x=168,y=41,width=150,height=25)
+ 
+        #Power On Date Label
+        Label_PODate=tk.Label(root)
+        Label_PODate["anchor"] = "c"
+        ft = tkFont.Font(family='Times',size=14)
+        Label_PODate["font"] = ft
+        Label_PODate["fg"] = "#333333"
+        Label_PODate["justify"] = "left"
+        Label_PODate["text"] = "Power On Date"
+        Label_PODate["background"] = menu_color
+        Label_PODate.place(x=330,y=41,width=150,height=25)
+ 
+        #WorkWeek Label
+        Label_WorkWeek=tk.Label(root)
+        Label_WorkWeek["anchor"] = "e"
+        ft = tkFont.Font(family='Times',size=10)
+        Label_WorkWeek["font"] = ft
+        Label_WorkWeek["fg"] = "#333333"
+        Label_WorkWeek["justify"] = "right"
+        Label_WorkWeek["text"] = "Work Week"
+        Label_WorkWeek["background"] = menu_color
+        Label_WorkWeek.place(x=330,y=69,width=70,height=25)
+ 
+        #Year Label
+        Label_Year=tk.Label(root)
+        Label_Year["anchor"] = "c"
+        ft = tkFont.Font(family='Times',size=10)
+        Label_Year["font"] = ft
+        Label_Year["fg"] = "#333333"
+        Label_Year["justify"] = "right"
+        Label_Year["text"] = "Year"
+        Label_Year["background"] = menu_color
+        Label_Year.place(x=370,y=99,width=30,height=25)
+
  
         def AdvancedCheck():
                 if var101.get() == 1:
@@ -380,7 +492,7 @@ class App():
         Label_optional_MS["justify"] = "left"
         Label_optional_MS["text"] = "Milestone"
         Label_optional_MS["relief"] = "flat"
-        Label_optional_MS.place(x=497,y=118,width=55,height=15)
+        Label_optional_MS.place(x=497,y=154,width=55,height=15)
  
         Label_optional_text=tk.Label(root)
         Label_optional_text["anchor"] = "w"
@@ -390,7 +502,7 @@ class App():
         Label_optional_text["justify"] = "left"
         Label_optional_text["text"] = "Text to append to ticket title."
         Label_optional_text["relief"] = "flat"
-        Label_optional_text.place(x=557,y=118,width=250,height=15)
+        Label_optional_text.place(x=557,y=154,width=250,height=15)
  
         self.varSelectAll=tk.IntVar(root)
         self.CheckBox_SelectAll=tk.Checkbutton(root)
@@ -400,7 +512,7 @@ class App():
         self.CheckBox_SelectAll["fg"] = "#333333"
         self.CheckBox_SelectAll["justify"] = "left"
         self.CheckBox_SelectAll["text"] = "Select All"
-        self.CheckBox_SelectAll.place(x=10,y=120,width=80,height=25)
+        self.CheckBox_SelectAll.place(x=10,y=156,width=80,height=25)
         self.CheckBox_SelectAll["offvalue"] = "0"
         self.CheckBox_SelectAll["onvalue"] = "1"
         self.CheckBox_SelectAll["command"] = self.CheckBox_SelectAll_command
@@ -421,7 +533,7 @@ class App():
             self.CheckBox_11["fg"] = "#333333"
             self.CheckBox_11["justify"] = "left"
             self.CheckBox_11["text"] = dynamic_vals["112"]["cb_title"]
-            self.CheckBox_11.place(x=10,y=160,width=490,height=25)
+            self.CheckBox_11.place(x=10,y=196,width=490,height=25)
             self.CheckBox_11["offvalue"] = "0"
             self.CheckBox_11["onvalue"] = "1"
             self.CheckBox_11["variable"] = var11
@@ -438,7 +550,7 @@ class App():
             self.CheckBox_21["fg"] = "#333333"
             self.CheckBox_21["justify"] = "left"
             self.CheckBox_21["text"] = dynamic_vals["212"]["cb_title"]
-            self.CheckBox_21.place(x=10,y=190,width=490,height=25)
+            self.CheckBox_21.place(x=10,y=226,width=490,height=25)
             self.CheckBox_21["offvalue"] = "0"
             self.CheckBox_21["onvalue"] = "1"
             self.CheckBox_21["variable"] = var21
@@ -455,7 +567,7 @@ class App():
             self.CheckBox_22["fg"] = "#333333"
             self.CheckBox_22["justify"] = "left"
             self.CheckBox_22["text"] = dynamic_vals["224"]["cb_title"]
-            self.CheckBox_22.place(x=10,y=220,width=490,height=25)
+            self.CheckBox_22.place(x=10,y=256,width=490,height=25)
             self.CheckBox_22["offvalue"] = "0"
             self.CheckBox_22["onvalue"] = "1"
             self.CheckBox_22["variable"] = var22
@@ -472,7 +584,7 @@ class App():
             self.CheckBox_31["fg"] = "#333333"
             self.CheckBox_31["justify"] = "left"
             self.CheckBox_31["text"] = dynamic_vals["311"]["cb_title"]
-            self.CheckBox_31.place(x=10,y=250,width=490,height=25)
+            self.CheckBox_31.place(x=10,y=286,width=490,height=25)
             self.CheckBox_31["offvalue"] = "0"
             self.CheckBox_31["onvalue"] = "1"
             self.CheckBox_31["variable"] = var31
@@ -489,7 +601,7 @@ class App():
             self.CheckBox_32["fg"] = "#333333"
             self.CheckBox_32["justify"] = "left"
             self.CheckBox_32["text"] = dynamic_vals["321"]["cb_title"]
-            self.CheckBox_32.place(x=10,y=280,width=490,height=25)
+            self.CheckBox_32.place(x=10,y=316,width=490,height=25)
             self.CheckBox_32["offvalue"] = "0"
             self.CheckBox_32["onvalue"] = "1"
             self.CheckBox_32["variable"] = var32
@@ -506,7 +618,7 @@ class App():
             self.CheckBox_41["fg"] = "#333333"
             self.CheckBox_41["justify"] = "left"
             self.CheckBox_41["text"] = dynamic_vals["411"]["cb_title"]
-            self.CheckBox_41.place(x=10,y=310,width=490,height=25)
+            self.CheckBox_41.place(x=10,y=346,width=490,height=25)
             self.CheckBox_41["offvalue"] = "0"
             self.CheckBox_41["onvalue"] = "1"
             self.CheckBox_41["variable"] = var41
@@ -522,7 +634,7 @@ class App():
             self.CheckBox_42["fg"] = "#333333"
             self.CheckBox_42["justify"] = "left"
             self.CheckBox_42["text"] = dynamic_vals["421"]["cb_title"]
-            self.CheckBox_42.place(x=10,y=340,width=490,height=25)
+            self.CheckBox_42.place(x=10,y=376,width=490,height=25)
             self.CheckBox_42["offvalue"] = "0"
             self.CheckBox_42["onvalue"] = "1"
             self.CheckBox_42["variable"] = var42
@@ -539,7 +651,7 @@ class App():
             self.CheckBox_43["fg"] = "#333333"
             self.CheckBox_43["justify"] = "left"
             self.CheckBox_43["text"] = dynamic_vals["431"]["cb_title"]
-            self.CheckBox_43.place(x=10,y=370,width=490,height=25)
+            self.CheckBox_43.place(x=10,y=406,width=490,height=25)
             self.CheckBox_43["offvalue"] = "0"
             self.CheckBox_43["onvalue"] = "1"
             self.CheckBox_43["variable"] = var43
@@ -556,7 +668,7 @@ class App():
             self.CheckBox_51["fg"] = "#333333"
             self.CheckBox_51["justify"] = "left"
             self.CheckBox_51["text"] = dynamic_vals["511"]["cb_title"]
-            self.CheckBox_51.place(x=10,y=400,width=490,height=25)
+            self.CheckBox_51.place(x=10,y=436,width=490,height=25)
             self.CheckBox_51["offvalue"] = "0"
             self.CheckBox_51["onvalue"] = "1"
             self.CheckBox_51["variable"] = var51
@@ -573,7 +685,7 @@ class App():
             self.CheckBox_61["fg"] = "#333333"
             self.CheckBox_61["justify"] = "left"
             self.CheckBox_61["text"] = dynamic_vals["611"]["cb_title"]
-            self.CheckBox_61.place(x=10,y=430,width=490,height=25)
+            self.CheckBox_61.place(x=10,y=466,width=490,height=25)
             self.CheckBox_61["offvalue"] = "0"
             self.CheckBox_61["onvalue"] = "1"
             self.CheckBox_61["variable"] = var61
@@ -590,7 +702,7 @@ class App():
             self.CheckBox_62["fg"] = "#333333"
             self.CheckBox_62["justify"] = "left"
             self.CheckBox_62["text"] = dynamic_vals["621"]["cb_title"]
-            self.CheckBox_62.place(x=10,y=460,width=490,height=25)
+            self.CheckBox_62.place(x=10,y=496,width=490,height=25)
             self.CheckBox_62["offvalue"] = "0"
             self.CheckBox_62["onvalue"] = "1"
             self.CheckBox_62["variable"] = var62
@@ -607,7 +719,7 @@ class App():
             self.CheckBox_71["fg"] = "#333333"
             self.CheckBox_71["justify"] = "left"
             self.CheckBox_71["text"] = dynamic_vals["711"]["cb_title"]
-            self.CheckBox_71.place(x=10,y=490,width=490,height=25)
+            self.CheckBox_71.place(x=10,y=526,width=490,height=25)
             self.CheckBox_71["offvalue"] = "0"
             self.CheckBox_71["onvalue"] = "1"
             self.CheckBox_71["variable"] = var71
@@ -625,7 +737,7 @@ class App():
             self.CheckBox_81["fg"] = "#333333"
             self.CheckBox_81["justify"] = "left"
             self.CheckBox_81["text"] = dynamic_vals["811"]["cb_title"]
-            self.CheckBox_81.place(x=10,y=520,width=490,height=25)
+            self.CheckBox_81.place(x=10,y=556,width=490,height=25)
             self.CheckBox_81["offvalue"] = "0"
             self.CheckBox_81["onvalue"] = "1"
             self.CheckBox_81["variable"] = var81
@@ -642,7 +754,7 @@ class App():
             self.CheckBox_91["fg"] = "#333333"
             self.CheckBox_91["justify"] = "left"
             self.CheckBox_91["text"] = dynamic_vals["911"]["cb_title"]
-            self.CheckBox_91.place(x=10,y=550,width=490,height=25)
+            self.CheckBox_91.place(x=10,y=586,width=490,height=25)
             self.CheckBox_91["offvalue"] = "0"
             self.CheckBox_91["onvalue"] = "1"
             self.CheckBox_91["variable"] = var91
@@ -659,66 +771,13 @@ class App():
         self.CheckBox_101["fg"] = "#333333"
         self.CheckBox_101["justify"] = "left"
         self.CheckBox_101["text"] = "Optional: Add additional tickets per milestone."
-        self.CheckBox_101.place(x=495,y=98,width=490,height=20)
+        self.CheckBox_101.place(x=495,y=134,width=490,height=20)
         self.CheckBox_101["variable"] = var101
         self.CheckBox_101["command"] = AdvancedCheck
         self.CheckBox_101.setvar = False
      ############################################################################################################################################
         
-        #Program Label
-        Label_Program=tk.Label(root)
-        Label_Program["anchor"] = "c"
-        ft = tkFont.Font(family='Times',size=14)
-        Label_Program["font"] = ft
-        Label_Program["fg"] = "#333333"
-        Label_Program["justify"] = "left"
-        Label_Program["text"] = "Program"
-        Label_Program["background"] = menu_color
-        Label_Program.place(x=10,y=5,width=150,height=25)
- 
-        #Site Label
-        Label_Site=tk.Label(root)
-        Label_Site["anchor"] = "c"
-        ft = tkFont.Font(family='Times',size=14)
-        Label_Site["font"] = ft
-        Label_Site["fg"] = "#333333"
-        Label_Site["justify"] = "center"
-        Label_Site["text"] = "Site"
-        Label_Site["background"] = menu_color
-        Label_Site.place(x=168,y=5,width=150,height=25)
- 
-        #Power On Date Label
-        Label_PODate=tk.Label(root)
-        Label_PODate["anchor"] = "c"
-        ft = tkFont.Font(family='Times',size=14)
-        Label_PODate["font"] = ft
-        Label_PODate["fg"] = "#333333"
-        Label_PODate["justify"] = "left"
-        Label_PODate["text"] = "Power On Date"
-        Label_PODate["background"] = menu_color
-        Label_PODate.place(x=330,y=5,width=150,height=25)
- 
-        #WorkWeek Label
-        Label_WorkWeek=tk.Label(root)
-        Label_WorkWeek["anchor"] = "e"
-        ft = tkFont.Font(family='Times',size=10)
-        Label_WorkWeek["font"] = ft
-        Label_WorkWeek["fg"] = "#333333"
-        Label_WorkWeek["justify"] = "right"
-        Label_WorkWeek["text"] = "Work Week"
-        Label_WorkWeek["background"] = menu_color
-        Label_WorkWeek.place(x=330,y=33,width=70,height=25)
- 
-        #Year Label
-        Label_Year=tk.Label(root)
-        Label_Year["anchor"] = "c"
-        ft = tkFont.Font(family='Times',size=10)
-        Label_Year["font"] = ft
-        Label_Year["fg"] = "#333333"
-        Label_Year["justify"] = "right"
-        Label_Year["text"] = "Year"
-        Label_Year["background"] = menu_color
-        Label_Year.place(x=370,y=63,width=30,height=25)
+
         
         #Milestones Label
         Label_MS=tk.Label(root)
@@ -729,7 +788,7 @@ class App():
         Label_MS["justify"] = "left"
         Label_MS["text"] = dynamic_CSV_file+" Milestones"
         Label_MS["relief"] = "flat"
-        Label_MS.place(x=10,y=95,width=186,height=30)
+        Label_MS.place(x=10,y=131,width=186,height=30)
  
         #Progress Label
         Label_ProgressSuccess.place(x=30,y=635,width=246,height=20)
@@ -772,9 +831,8 @@ class App():
             send_mail = "false"
  
             if pre_production == "TRUE":
-#orig                lab = "JF4-4108 (Debug Lab)"
                 lab = fields['lab']
-                print('Pre-Perduction Mode')
+                print('Pre-Production Mode')
                 payload = {
                     "subject": subject,
                     "tenant": tenant,
@@ -935,6 +993,10 @@ class App():
         #--------------------------------------------------------------------------------------------------------------------
         #Start Here------------------------------------------------------
         def build_ticket_detials():
+            global url
+            global linkUrl
+            global icon
+            
             not_ready=''
             not_ready1=''
             not_ready2=''
@@ -1083,7 +1145,7 @@ class App():
                        #         week = str(x.isocalendar().week).zfill(2)
                                 milestoneww = (year + week)
                                 _milestone_eta["milestone_eta"]=milestoneww
-                                print("milestoneww = "+milestoneww + "milestone = "+milestone)
+                                print("milestone ww = "+ milestoneww + " milestone = "+ milestone)
  
                                 _service_type={}
                                 _service_type["service_type"]=static_vals.get("service_type")
@@ -1293,11 +1355,13 @@ class App():
                         tickets = []
                         errors = []
                         HSD_ID = []
- 
+                        get_hsd_url()
                         for fields in fieldlist:
                             Button_Create["state"] = "disabled"
                             app.ticketInterval = app.ticketInterval +1
                             #----------------------------------------------------------
+                            print("Using - " + str(url))
+                            print("Using - " + str(linkUrl))
                             response = postnewHSD(fields) #Uncomment to create tickets
                             #----------------------------------------------------------
                             print('ticket_number',ticket_number)
@@ -1434,13 +1498,13 @@ class App():
         Button_info=ttk.Button(root)
         Button_info["text"] = "info"
         Button_info["tooltip"] = "File version information."
-        Button_info.place(x=417,y=96,width=65,height=30)
+        Button_info.place(x=417,y=132,width=65,height=30)
         Button_info["command"] = display_info
  
         Button_advance=ttk.Button(root)
         Button_advance["text"] = "->"
         Button_advance["tooltip"] = "Advance options."
-        Button_advance.place(x=417,y=126,width=65,height=30)
+        Button_advance.place(x=417,y=162,width=65,height=30)
         Button_advance["command"] = advance_window
  
         #-----------------------------------------------------------------------------------------------------------------------------
@@ -1448,19 +1512,19 @@ class App():
         MS_1_selected = tk.StringVar(root)
         MS_option1=ttk.OptionMenu(root,MS_1_selected,*MS_options)
         MS_option1['tooltip'] = 'Choose Milestone.'
-        MS_option1.place(x=500,y=135,width=54,height=25)
+        MS_option1.place(x=500,y=171,width=54,height=25)
         MS_option1.configure(state="disabled")
  
         
         MS_option2=ttk.OptionMenu(root,MS_2_selected,*MS_options)
         MS_option2['tooltip'] = 'Choose Milestone.'
-        MS_option2.place(x=500,y=165,width=54,height=25)
+        MS_option2.place(x=500,y=201,width=54,height=25)
         MS_option2.configure(state="disabled")
  
         
         MS_option3=ttk.OptionMenu(root,MS_3_selected,*MS_options)
         MS_option3['tooltip'] = 'Choose Milestone.'
-        MS_option3.place(x=500,y=195,width=54,height=25)
+        MS_option3.place(x=500,y=231,width=54,height=25)
         MS_option3.configure(state="disabled")
  
         MS_4_selected = tk.StringVar(root)
@@ -1472,66 +1536,66 @@ class App():
         MS_5_selected = tk.StringVar(root)
         MS_option5=ttk.OptionMenu(root,MS_5_selected,*MS_options)
         MS_option5['tooltip'] = 'Choose Milestone.'
-        MS_option5.place(x=500,y=255,width=54,height=25)
+        MS_option5.place(x=500,y=261,width=54,height=25)
         MS_option5.configure(state="disabled")
  
         MS_6_selected = tk.StringVar(root)
         MS_option6=ttk.OptionMenu(root,MS_6_selected,*MS_options)
         MS_option6['tooltip'] = 'Choose Milestone.'
-        MS_option6.place(x=500,y=285,width=54,height=25)
+        MS_option6.place(x=500,y=321,width=54,height=25)
         MS_option6.configure(state="disabled")
  
         MS_7_selected = tk.StringVar(root)
         MS_option7=ttk.OptionMenu(root,MS_7_selected,*MS_options)
         MS_option7['tooltip'] = 'Choose Milestone.'
-        MS_option7.place(x=500,y=315,width=54,height=25)
+        MS_option7.place(x=500,y=351,width=54,height=25)
         MS_option7.configure(state="disabled")
  
         MS_8_selected = tk.StringVar(root)
         MS_option8=ttk.OptionMenu(root,MS_8_selected,*MS_options)
         MS_option8['tooltip'] = 'Choose Milestone.'
-        MS_option8.place(x=500,y=345,width=54,height=25)
+        MS_option8.place(x=500,y=381,width=54,height=25)
         MS_option8.configure(state="disabled")
  
         MS_9_selected = tk.StringVar(root)
         MS_option9=ttk.OptionMenu(root,MS_9_selected,*MS_options)
         MS_option9['tooltip'] = 'Choose Milestone.'
-        MS_option9.place(x=500,y=375,width=54,height=25)
+        MS_option9.place(x=500,y=411,width=54,height=25)
         MS_option9.configure(state="disabled")
  
  
         #Advanced Entry
-        entry_1.place(x=556,y=135,width=282,height=25)
+        entry_1.place(x=556,y=171,width=282,height=25)
         entry_1.configure(state= "disabled")
         
-        entry_2.place(x=556,y=165,width=282,height=25)
+        entry_2.place(x=556,y=201,width=282,height=25)
         entry_2.configure(state= "disabled")
         
-        entry_3.place(x=556,y=195,width=282,height=25)
+        entry_3.place(x=556,y=231,width=282,height=25)
         entry_3.configure(state= "disabled")
  
         entry_4 = tk.Entry(root)
-        entry_4.place(x=556,y=225,width=282,height=25)
+        entry_4.place(x=556,y=261,width=282,height=25)
         entry_4.configure(state= "disabled")
  
         entry_5 = tk.Entry(root)
-        entry_5.place(x=556,y=255,width=282,height=25)
+        entry_5.place(x=556,y=291,width=282,height=25)
         entry_5.configure(state= "disabled")
  
         entry_6 = tk.Entry(root)
-        entry_6.place(x=556,y=285,width=282,height=25)
+        entry_6.place(x=556,y=321,width=282,height=25)
         entry_6.configure(state= "disabled")
  
         entry_7 = tk.Entry(root)
-        entry_7.place(x=556,y=315,width=282,height=25)
+        entry_7.place(x=556,y=351,width=282,height=25)
         entry_7.configure(state= "disabled")
  
         entry_8 = tk.Entry(root)
-        entry_8.place(x=556,y=345,width=282,height=25)
+        entry_8.place(x=556,y=381,width=282,height=25)
         entry_8.configure(state= "disabled")
  
         entry_9 = tk.Entry(root)
-        entry_9.place(x=556,y=375,width=282,height=25)
+        entry_9.place(x=556,y=411,width=282,height=25)
         entry_9.configure(state= "disabled")
  
         #Advance Buttons
@@ -1539,68 +1603,65 @@ class App():
         button_clear1 = tk.Button(root)
         button_clear1["text"] = "Clear"
         #button_clear1['tooltip'] = "Clear Entry."
-        button_clear1.place(x=840,y=135,width=45,height=25)
+        button_clear1.place(x=840,y=171,width=45,height=25)
         button_clear1["command"] = clear_advance_row1
         button_clear1["state"] = "disabled"
  
         button_clear2 = tk.Button(root)
         button_clear2["text"] = "Clear"
         #button_clear2["tooltip"] = "Clear Entry."
-        button_clear2.place(x=840,y=165,width=45,height=25)
+        button_clear2.place(x=840,y=201,width=45,height=25)
         button_clear2["command"] = clear_advance_row2
         button_clear2["state"] = "disabled"
  
         button_clear3 = tk.Button(root)
         button_clear3["text"] = "Clear"
         #button_clear3["tooltip"] = "Clear Entry."
-        button_clear3.place(x=840,y=195,width=45,height=25)
+        button_clear3.place(x=840,y=231,width=45,height=25)
         button_clear3["command"] = clear_advance_row3
         button_clear3["state"] = "disabled"
  
         button_clear4 = tk.Button(root)
         button_clear4["text"] = "Clear"
         #button_clear4["tooltip"] = "Clear Entry."
-        button_clear4.place(x=840,y=225,width=45,height=25)
+        button_clear4.place(x=840,y=261,width=45,height=25)
         button_clear4["command"] = clear_advance_row4
         button_clear4["state"] = "disabled"
  
         button_clear5 = tk.Button(root)
         button_clear5["text"] = "Clear"
         #button_clear5["tooltip"] = "Clear Entry."
-        button_clear5.place(x=840,y=255,width=45,height=25)
+        button_clear5.place(x=840,y=291,width=45,height=25)
         button_clear5["command"] = clear_advance_row5
         button_clear5["state"] = "disabled"
  
         button_clear6 = tk.Button(root)
         button_clear6["text"] = "Clear"
         #button_clear6["tooltip"] = "Clear Entry."
-        button_clear6.place(x=840,y=285,width=45,height=25)
+        button_clear6.place(x=840,y=321,width=45,height=25)
         button_clear6["command"] = clear_advance_row6
         button_clear6["state"] = "disabled"
  
         button_clear7 = tk.Button(root)
         button_clear7["text"] = "Clear"
         #button_clear7["tooltip"] = "Clear Entry."
-        button_clear7.place(x=840,y=315,width=45,height=25)
+        button_clear7.place(x=840,y=351,width=45,height=25)
         button_clear7["command"] = clear_advance_row7
         button_clear7["state"] = "disabled"
  
         button_clear8 = tk.Button(root)
         button_clear8["text"] = "Clear"
         #button_clear8["tooltip"] = "Clear Entry."
-        button_clear8.place(x=840,y=345,width=45,height=25)
+        button_clear8.place(x=840,y=381,width=45,height=25)
         button_clear8["command"] = clear_advance_row8
         button_clear8["state"] = "disabled"
  
         button_clear9 = tk.Button(root)
         button_clear9["text"] = "Clear"
         #button_clear9["tooltip"] = "Clear Entry."
-        button_clear9.place(x=840,y=375,width=45,height=25)
+        button_clear9.place(x=840,y=411,width=45,height=25)
         button_clear9["command"] = clear_advance_row9
         button_clear9["state"] = "disabled"
- 
- 
- 
  
     def CheckBox_SelectAll_command(self):
         if (self.varSelectAll.get()==1):
