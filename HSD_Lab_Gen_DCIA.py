@@ -5,7 +5,6 @@ import tkinter.messagebox
 import tkinter.font as tkFont
 from ttkwidgets import tooltips
 import datetime
-#from datetime import datetime, timedelta
 from datetime import timedelta
 import time
 import csv
@@ -30,7 +29,7 @@ icon = ""
 #url_Pre = "https://hsdes-api-pre.intel.com/"
 
  
-vernum = "0.977" #application version number
+vernum = "0.98" #application version number
 configver = "" #config version number
 dynamicver = "" #dynamic version number
 staticver = "" #static version number
@@ -70,7 +69,7 @@ class App():
         cv.create_line(326,38,326,126)
 
         # Create Switch Function for Production/Pre-Production
-        #Switch Label and assign hsd_mode Http address.
+        # Set Switch Label and assign hsd_mode Http address.
         def get_hsd_url():
             global url
             global linkUrl
@@ -205,19 +204,14 @@ class App():
         print('config_open= '+ str(config_open))
         #dynamic_CSV_file = "VV" #Options: 'Original' 'PO' 'VV' 'NEW'
         dynamic_CSV_file = 'NEW'
- 
-     #orignal   Original_dynamic_vals = {}
-     #orignal   PO_dynamic_vals = {}
-     #orignal   PO_dict_exist = True
-     #orignal   VV_dynamic_vals = {}
-     #orignal   VV_dict_exist = True
+
         dynamic_vals = {}
  
         #Load dynamic CSV file
         print('Load NEW Track dynamic CSV File')
         ### NEW Track CSV Code for file dynamic_vals.csv ###
         try:
-            with open("dependencies/dynamic_vals_new.csv", encoding="utf8") as data_file:
+            with open("dependencies/dynamic_vals.csv", encoding="utf8") as data_file:
                 print('\nloading NEW track dynamic_vals')
                 data = csv.reader(data_file)
                 dynamic_headers = next(data)[0:]                    
@@ -228,7 +222,6 @@ class App():
                     name = row[1]
  #                   name = row[0]
                     values = []
-
 #                    for x in row[1:]:
                     for x in row[0:]:    
                         values.append(x)
@@ -239,7 +232,7 @@ class App():
 
                     dynamic_vals[name] = temp_dict
                     
-            with open("dependencies/dynamic_vals_new.csv", encoding="utf8") as f:
+            with open("dependencies/dynamic_vals.csv", encoding="utf8") as f:
                 csv_dynamic_= csv.DictReader(f)
                 for line in csv_dynamic_:
                     if(line['Version']):                        
@@ -255,7 +248,6 @@ class App():
         except:
             print('Did not load dynamic_vals_new')
             dynamic_vals_open=False
- 
  
         #Load static CSV file Gets version from dynamic_vals_new file
         static_vals = {}
@@ -1143,7 +1135,7 @@ class App():
                                 year = str(x.isocalendar()[0])
                                 week = str(x.isocalendar()[1]).zfill(2)
                        #         week = str(x.isocalendar().week).zfill(2)
-                                milestoneww = (year + week)
+                                milestoneww = (year + "-" + week)
                                 _milestone_eta["milestone_eta"]=milestoneww
                                 print("milestone ww = "+ milestoneww + " milestone = "+ milestone)
  
@@ -1356,12 +1348,13 @@ class App():
                         errors = []
                         HSD_ID = []
                         get_hsd_url()
+                        print("Using - " + str(url))
+                        print("Using - " + str(linkUrl))
+                        
                         for fields in fieldlist:
                             Button_Create["state"] = "disabled"
                             app.ticketInterval = app.ticketInterval +1
                             #----------------------------------------------------------
-                            print("Using - " + str(url))
-                            print("Using - " + str(linkUrl))
                             response = postnewHSD(fields) #Uncomment to create tickets
                             #----------------------------------------------------------
                             print('ticket_number',ticket_number)
