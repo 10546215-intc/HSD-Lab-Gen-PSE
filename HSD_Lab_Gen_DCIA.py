@@ -14,6 +14,9 @@ from requests_kerberos import HTTPKerberosAuth
 import urllib3
 import os
 import customtkinter
+import logging
+
+
  
 # this is to ignore the ssl insecure warning as we are passing in 'verify=false'
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -23,7 +26,33 @@ os.environ["no_proxy"] = "127.0.0.1,localhost,intel.com"
 # Declare global variables
 url = ""
 linkUrl = ""
+auto_c = ""
 icon = ""
+dynamic_vals_open = ""
+pull_down_mode = "dynamic" # "dynamic" for HSD based "static" for Config file
+milestones = {}
+checkboxes = {}
+variables = {}
+mode_var = {}
+src_var = {}
+dynamic_vals = {}
+project_options = ()
+site_options = ()
+dynamic_CSV_file = 'NEW'
+###site_configs could be list
+sites_options=['']
+notify_dict={}
+customer_options={}
+backup_options={}
+notify_options={}
+lab_dict={}
+lead_dict={}
+static_vals = {}
+config_open = ""
+checkbox_dict={}
+staticver = ""
+static_vals_open = "" #static version number
+linkCollection = ""
 
 #url_Prod = "https://hsdes-api.intel.com/"
 #url_Pre = "https://hsdes-api-pre.intel.com/"
@@ -32,17 +61,301 @@ icon = ""
 vernum = "0.98" #application version number
 configver = "" #config version number
 dynamicver = "" #dynamic version number
-staticver = "" #static version number
  
 menu_color = "#e4e5ee"
 option_color = "#D4D6E4"
  
+root = customtkinter.CTk()
  
+def get_milestones():
+            ### NEW Track CSV Code for file dynamic_vals.csv ###
+        global milestones
+        global dynamic_vals_open
+        try:
+            with open("dependencies/dynamic_vals.csv", encoding="utf8") as data_file:
+                print('\nloading NEW track dynamic_vals')
+                data = csv.reader(data_file)
+                dynamic_headers = next(data)[0:]                            
+                for row in data:
+                    temp_dict = {}
+                    keystone = row[0]
+                    name = row[2]
+                    values = []
+                    for x in row[0:]:    
+                        values.append(x)
+
+                    for i in range(len(values)):
+                        if values[i]:
+                            temp_dict[dynamic_headers[i]] = values[i]
+                    milestones[name] = temp_dict
+            dynamic_vals_open=True
+        except:
+            print('Did not load dynamic_vals_new')
+            dynamic_vals_open=False
+
+def get_checkboxes():
+    #########  Create milestone check boxes
+    global checkboxes
+    global variables
+    print('')
+
+    cb_num=1
+    start_y = 196
+    keystones = 0
+
+    # Loop through each dictionary in the milestone collection
+    for key, item in milestones.items():
+        # Check if the value of the "keystone" key is 1
+        if item.get("keystone") == "1":
+            # Increment the count
+            keystones += 1
+#    if keystones > 8:
+#        tkinter.messagebox.showwarning('Keystone Error','Only 14 Milestones can be displayed in tool. Click "OK" to continue. All Milestones will be created just not listed')
+#        print("Only 14 Milestones can be displayed in tool")
+
+    try:
+
+        # Loop to create checkboxes
+        for key, item in milestones.items():
+            # Check if the value of the "keystone" key is 1
+            if item.get("keystone") == "1":
+                var = tk.IntVar(root)
+                checkbox = tk.Checkbutton(root)
+                checkbox["anchor"] = "w"
+                checkbox["font"] = tkFont.Font(family='Times', size=10)
+                checkbox["fg"] = "#333333"
+                checkbox["justify"] = "left"
+                checkbox["text"] = milestones[key]["cb_title"]
+                checkbox.place(x=10, y=196 + cb_num * 30, width=490, height=25)  # Adjust y position for each checkbox
+                checkbox["offvalue"] = "0"
+                checkbox["onvalue"] = "1"
+                checkbox["variable"] = var
+                
+                # Select the Checkbutton by default
+                checkbox.select()
+                #Orig# variables[key] = var
+                #orig# variables[key] = {'widget': checkbox, 'variable': var, 'text': checkbox["text"]}
+                variables[key] = {'widget': checkbox, 'variable': var, 'text': checkbox["text"], 'mile': milestones[key]["mile"] }
+                # Store the checkbox in the dictionary
+                checkboxes[cb_num] = checkbox
+                cb_num += 1
+                
+    except:
+        print("fail")
+
+def get_opt_menu_list(field, name, data_src):
+    global project_options
+    global site_options
+    global static_vals
+    tmp_dict=[]
+    data_lower=[]
+    
+    src_file = f"dependencies/{name}.csv"   
+    try:
+        headers = {'Content-type': 'application/json'}
+#        Label_ProgressSuccess["text"] = "Validating Menu Options with HSD-ES DB"
+#        root.after(1, Label_ProgressSuccess.update())
+        url_validate = f'{auto_c}/{field}'
+        field_type = field
+        response = requests.get(url_validate, verify=False, auth=HTTPKerberosAuth(), headers=headers)
+        
+        # Check if the response is successful
+        if response.status_code != 200:
+#           logger.error(f"Failed to fetch data: {response.status_code} - {response.text}")
+            return []
+        
+        data = response.json().get("data", [])
+        data_lower = [(item.get('' + field_type + '', None)) for item in data if item.get('' + field_type + '', None)]
+
+        # Validate the structure of the data
+        if not isinstance(data, list):
+#           logger.error("Invalid data format received")
+            return []
+
+    except requests.RequestException as e:
+#       logger.error(f"Request failed: {e}")
+        tkinter.messagebox.showwarning('Connection Error','Not connected to HSDE-ES DB.')
+        return []
+    except Exception as e:
+#       logger.error(f"An unexpected error occurred: {e}")
+        tkinter.messagebox.showwarning('Connection Error','Not connected to HSDE-ES DB.')
+        return []
+### Load from CSV file    
+    if data_src == 'CSV':     
+        try:
+        #with open(r"dependencies/config.csv", encoding="utf8") as f:
+            with open(src_file, encoding="utf8") as f:    
+                csv_config = csv.DictReader(f)
+                print('\nloading config and verifing options')
+                for line in csv_config:
+                    #Checks if there is a value in the first line and if it exist in HSD
+                    #print(f" Checking for {line[name]} ")
+                    if(line[name]) and line.get(name).lower() in data_lower:
+                        tmp_dict.append(line[name])
+                        if name == 'Site':                     
+                            sites_options.append(line['Site'])
+                            customer_options.update({line['Site']: line['Customer']})
+                            backup_options.update({line['Site']: line['Backup']})
+                            notify_dict.update({line['Site']: line['Notify']})
+                            lab_dict.update({line['Site']: line['Lab']})
+                            lead_dict.update({line['Site']: line['Customer']})
+                    else:
+                        print(f" {line[name]} - Not Found In HSD, Check Name and update program.csv" )
+                        FileOpenMessage="Can not find file(s):\n"
+                        FileOpenMessage = FileOpenMessage + f'\ndependencies/{name}.csv'
+            v_list = tmp_dict
+            
+            if name == 'program':
+                project_options = v_list
+                project_options.sort()            
+                project_options.insert(0,"")
+            elif name == 'Site':
+                site_options = v_list
+                site_options.sort()
+                site_options.insert(0,"")
+            else:
+                print("Options list unassigned") 
+            
+            config_open=True
+        except:
+            config_open=False
+
+### Load from HSD query and CSV File        
+    if data_src == 'HSD':
+        try:
+            v_list = [(item.get('' + field_type + '', None)) for item in data if item.get('' + field_type + '', None)]   
+            #with open(r"dependencies/config.csv", encoding="utf8") as f:
+            with open(src_file, encoding="utf8") as f:    
+                csv_config = csv.DictReader(f)
+                print('\nloading config and verifing options')
+                for line in csv_config:                
+                    sites_options.append(line['Site'])
+                    customer_options.update({line['Site']: line['Customer']})
+                    backup_options.update({line['Site']: line['Backup']})
+                    notify_dict.update({line['Site']: line['Notify']})
+                    lab_dict.update({line['Site']: line['Lab']})
+                    lead_dict.update({line['Site']: line['Customer']})
+                    
+                if name == 'program':
+                    project_options = v_list
+                    project_options.sort()            
+                    project_options.insert(0,"")
+                elif name == 'site':
+                    site_options = v_list
+                    site_options.sort()
+                    site_options.insert(0,"")
+                else:
+                    print("Options list unassigned")          
+            config_open=True
+        except:
+            config_open=False
+            FileOpenMessage="Can not find file(s):\n"
+            FileOpenMessage = FileOpenMessage + f'\ndependencies/{name}.csv'
+    print('config_open= '+ str(config_open))
+### Load Static_vals happens each time menu list are updated
+    try:
+        with open("dependencies/static_vals.csv", encoding="utf8") as f:
+            print('\nloading static_vals')
+            csv_static_vals = csv.DictReader(f)
+            for line in csv_static_vals:
+                if(line['Version']):
+                    staticver = line['Version']
+                static_vals[line['Item']] = line['Value']
+        static_vals_open=True
+    except:
+        static_vals_open=False
+        FileOpenMessage="Can not find file(s):\n"
+        FileOpenMessage = FileOpenMessage + '\ndependencies/static_vals.csv'
+    print('static_vals_open = ' + str(static_vals_open))
+
+# def load_site_config():
+#     global config_open
+#     if pull_down_mode == "dynamic":
+#         ### This needed to be added to build version and site info dictionaries from above.
+#     #            site_list = get_opt_menu_list('support.site','project')
+#         site_options_lower = [site.lower() for site in site_options] # Convert site_options sites to lowercase for compare
+#         try:
+#             with open(r"dependencies/config.csv", encoding="utf8") as f:
+#                 csv_config = csv.DictReader(f)
+#                 print('\nloading config and verifing options')
+#                 for line in csv_config:
+#                     if(line['Version']):
+#                         configver = line['Version']
+
+#                     if(line['Site']):        
+#                         if line['Site'].lower()  in site_options_lower:
+#                             sites_options.append(line['Site'].lower())
+#                             lab_dict.update({line['Site'].lower(): line['Lab']})
+#                             notify_dict.update({line['Site'].lower(): line['Notify']})
+#                             lead_dict.update({line['Site'].lower(): line['Customer']})
+
+# ## this may have been for future in order to add multiple customer contacts will need to investigate
+#                         if(line['Customer']):
+#                             customer_options.update({line['Site']: line['Customer']})
+
+#                         if(line['Notify']):
+#                             notify_options.update({line['Site']: line['Notify']})
+#             config_open=True
+#         except:
+#             config_open=False
+
+#         print('config_open = '+ str(config_open))
+        
+def get_hsd_url(mode):
+    global url
+    global linkUrl
+    global icon
+    global milestones
+    global auto_c
+    
+    if mode == "Pre-Prod":
+#        mode_label.configure(text="Pre-Production (HSD)")
+        url = 'https://hsdes-api-pre.intel.com/rest/article'
+        linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
+        auto_c = 'https://hsdes-api-pre.intel.com/rest/query/autocomplete/support/services_sys_val/'
+        icon = 'dependencies/Y.png'
+    else:
+#        mode_label.configure(text="Production (HSD)")
+        url = 'https://hsdes-api.intel.com/rest/article'
+        linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
+        auto_c = 'https://hsdes-api.intel.com/rest/query/autocomplete/support/services_sys_val/'
+        icon = 'dependencies/B.png'
+    UpdateIcon()
+    
+def UpdateIcon():
+    global icon
+    try:
+        p1 = PhotoImage(file=icon)
+        root.iconphoto(False, p1)
+    except:
+        print('Could not find icon.')
+
+def reload_menus():
+    pass
+        # get_opt_menu_list('services_sys_val.support.program','program',mode_var['variable'].get()) 
+        # get_opt_menu_list('support.site','Site', mode_var['variable'].get()) 
+
 class App():
+    global dynamic_vals
+    global dynamic_CSV_file
+    global dynamic_vals_open
+    global static_vals_open
+    global pull_down_mode
+    global project_options
+    global site_options
+    global lab_dict
+    global sites_options
+    global notify_dict
+    global lead_dict
+    global customer_options
+    global notify_options
+    global config_open
+    
     def __init__(self, root):
         root.title("HSD-Lab Gen - Version " + str(vernum))
         root.eval("tk::PlaceWindow . center")
         #setting window size
+        #width=492
         width=492
         height=740
         screenwidth = root.winfo_screenwidth()
@@ -51,15 +364,16 @@ class App():
         root.geometry(alignstr)
         root.resizable(width=False, height=False)
  
-        #Load Icon
-        def UpdateIcon():
-            try:
-                p1 = PhotoImage(file=icon)
-                root.iconphoto(False, p1)
-            except:
-                print('Could not find icon.')
-        #icon = 'dependencies/B.png' #Production Mode
-        #UpdateIcon()
+        # #Load Icon
+        # def UpdateIcon():
+        #     global icon
+        #     try:
+        #         p1 = PhotoImage(file=icon)
+        #         root.iconphoto(False, p1)
+        #     except:
+        #         print('Could not find icon.')
+        # #icon = 'dependencies/B.png' #Production Mode
+        # #UpdateIcon()
  
         #Set Size for GUI
         cv = Canvas(root,width=892,height=740)
@@ -68,29 +382,13 @@ class App():
         cv.create_line(165,38,165,126)
         cv.create_line(326,38,326,126)
 
-        # Create Switch Function for Production/Pre-Production
-        # Set Switch Label and assign hsd_mode Http address.
-        def get_hsd_url():
-            global url
-            global linkUrl
-            global icon
-            global test
-            
-            if switch_var.get() == "Pre-Prod":
-                mode_label.configure(text="Pre-Production (HSD)")
-                url = 'https://hsdes-api-pre.intel.com/rest/article'
-                linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
-                icon = 'dependencies/Y.png'
-            else:
-                mode_label.configure(text="Production (HSD)")
-                url = 'https://hsdes-api.intel.com/rest/article'
-                linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
-                icon = 'dependencies/B.png'
-            UpdateIcon()
-
         # Create Toggle function
         def clicker():
             mode_switch.toggle()
+            if switch_var.get() == "Pre-Prod":
+                mode_label.configure(text="Pre-Production (HSD)")
+            else:
+                mode_label.configure(text="Production (HSD)")
 
         # Create a StringVar
         switch_var = customtkinter.StringVar(value="Pre-Prod")
@@ -104,15 +402,35 @@ class App():
                                             text_color="blue",
                                             state="normal",
                                             )
+        mode_var = {'widget': mode_switch, 'variable': switch_var}
 
+        # Create Toggle function
+        def clicker_menu_src():
+            src_switch.toggle()
+
+        # Option Menu Source Switch
+        switch_src = customtkinter.StringVar(value="CSV")
+
+        # Create Switch
+        src_switch = customtkinter.CTkSwitch(root, text="", command=reload_menus(),
+                                            variable=switch_src, onvalue="HSD", offvalue="CSV",
+                                            switch_width=20,
+                                            switch_height=10,
+                                            font=("Times", 24),
+                                            text_color="blue",
+                                            state="normal",
+                                            )
+        src_var = {'widget': src_switch, 'variable': switch_src}
         # Create Label
         mode_label = customtkinter.CTkLabel(root, text="Pre-Production", font=("Times", 24), text_color="blue")
-
+    #    src_label =
         # Place the label and switch
         mode_label.place(relx=0.5, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
         mode_switch.place(relx=1, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
- 
- 
+        
+    #    src_label.place(relx=0.5, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
+        src_switch.place(relx=1, rely=0.29, anchor=CENTER)  # Adjust x and y as needed       
+
         #ProgressSuccess Label
         Label_ProgressSuccess=tk.Label(root)
         ft = tkFont.Font(family='Times',size=18)
@@ -122,192 +440,34 @@ class App():
         Label_ProgressSuccess["text"] = ""
         Label_ProgressSuccess.place(x=0,y=340,width=492,height=20)
 
-        get_hsd_url()
+
+
+        get_hsd_url(switch_var.get())
+        get_opt_menu_list('services_sys_val.support.program','program',switch_src.get()) 
+        get_opt_menu_list('support.site','Site', switch_src.get()) 
+        get_milestones()
+        
 #### Update to populate pulldowns from query, to be removed after 
         #Validate field aginist HSD-ES DB
-        hsdcheck = True
-        def validateField(field, value):
-            isvalid = False
-            headers = { 'Content-type': 'application/json' }
-            Label_ProgressSuccess["text"]= "Validating Menu Options with HSD-ES DB"
-            root.after(1,Label_ProgressSuccess.update())
-            url_validate = f'https://hsdes-api.intel.com/rest/query/autocomplete/support/services_sys_val/{field}'
-            try:
-                response = requests.get(url_validate, verify=False, auth=HTTPKerberosAuth(), headers = headers)
-            except:
-                hsdcheck=False
-    
-            for i in response.json()["data"]:
-                #print(value, ':', isvalid)
-                if value.lower() in i[field]:
-                    isvalid = True
-    
-                #print(value, ':', isvalid)Validate 
-            return isvalid
- 
         # Create variables for the project and site option selected, etc.
         project_option_selected = tk.StringVar(root)
         site_option_selected = tk.StringVar(root)
         customer_option_selected = tk.StringVar(root)
         notify_option_selected = tk.StringVar(root)
  
-        project_options=['']
-        sites_options=['']
-        customer_options=['']
-        notify_options=['']
-        lab_dict={}
-        notify_dict={}
-        lead_dict={}
+
         MS_options=['']
-        l_MS_options=['']
- 
+#        l_MS_options=['']
+        
         #Close GUI and Python
         def close():
             exec
             root.destroy()
  
-        #Load config CSV file
-        try:
-            with open(r"dependencies/config.csv", encoding="utf8") as f:
-                csv_config = csv.DictReader(f)
-                print('\nloading config and verifing options')
-                for line in csv_config:
-                    if(line['Version']):
-                        configver = line['Version']
-    ##******## This seems to look at config file for Dynamic value, is hardcoded to "New"
-    ##******## If has value then checks HSD to see if field values exist if passes the writes to ticket variables
-                    if(line['Dynamic']):
-                        dynamic_CSV_file = line['Dynamic']
- 
-                    if(line['Program']):
- 
-                        if validateField('services_sys_val.support.program',line['Program']):
-                            project_options.append(line['Program'])
- 
-                    if(line['Site']):
-                       if validateField('support.site',line['Site']):
-                           sites_options.append(line['Site'])
-                           lab_dict.update({line['Site']: line['Lab']})
-                           notify_dict.update({line['Site']: line['Notify']})
-                           lead_dict.update({line['Site']: line['Customer']})
- 
-                    if(line['Customer']):
-                       customer_options.append(line['Customer'])
- 
-                    if(line['Notify']):
-                       notify_options.append(line['Notify'])
- 
-            config_open=True
-        except:
-            config_open=False
- 
-        print('config_open= '+ str(config_open))
-        #dynamic_CSV_file = "VV" #Options: 'Original' 'PO' 'VV' 'NEW'
-        dynamic_CSV_file = 'NEW'
-
-        dynamic_vals = {}
- 
-        #Load dynamic CSV file
-        print('Load NEW Track dynamic CSV File')
-        ### NEW Track CSV Code for file dynamic_vals.csv ###
-        try:
-            with open("dependencies/dynamic_vals.csv", encoding="utf8") as data_file:
-                print('\nloading NEW track dynamic_vals')
-                data = csv.reader(data_file)
-                dynamic_headers = next(data)[0:]                    
-#orig                dynamic_headers = next(data)[1:]            
-                for row in data:
-                    temp_dict = {}
-                    keystone = row[0]
-                    name = row[1]
- #                   name = row[0]
-                    values = []
-#                    for x in row[1:]:
-                    for x in row[0:]:    
-                        values.append(x)
-
-                    for i in range(len(values)):
-                        if values[i]:
-                            temp_dict[dynamic_headers[i]] = values[i]
-
-                    dynamic_vals[name] = temp_dict
-                    
-            with open("dependencies/dynamic_vals.csv", encoding="utf8") as f:
-                csv_dynamic_= csv.DictReader(f)
-                for line in csv_dynamic_:
-                    if(line['Version']):                        
-                        dynamicver = line['Version']
-                        print('dynamicver: ', dynamicver)
-
-                for key in dynamic_vals.keys():
-                        l_MS_options.append(key[0] + '.' + key[1])
-
-                MS_options=sorted([*set(l_MS_options)])
-
-            dynamic_vals_open=True
-        except:
-            print('Did not load dynamic_vals_new')
-            dynamic_vals_open=False
- 
-        #Load static CSV file Gets version from dynamic_vals_new file
-        static_vals = {}
-        try:
-            with open("dependencies/static_vals.csv", encoding="utf8") as f:
-                print('\nloading static_vals')
-                csv_static_vals = csv.DictReader(f)
- 
-                for line in csv_static_vals:
-                    if(line['Version']):
-                        staticver = line['Version']
- 
-                    static_vals[line['Item']] = line['Value']
-            static_vals_open=True
-        except:
-            static_vals_open=False
-        print('static_vals_open= ' + str(static_vals_open))
- 
-        #CSV file load error handeling
-        if hsdcheck:
-            if not config_open or not dynamic_vals_open or not static_vals_open:
-                FileOpenMessage="Can not find file(s):\n"
- 
-                if not config_open:
-                    FileOpenMessage = FileOpenMessage + '\ndependencies/config.csv'
- 
-                if not dynamic_vals_open:
-                    FileOpenMessage = FileOpenMessage + '\ndependencies/dynamic_vals.csv'
- 
-                if not static_vals_open:
-                    FileOpenMessage = FileOpenMessage + '\ndependencies/static_vals.csv'
- 
-                FileOpenMessage = FileOpenMessage + '\n\nWill now exit ' + str(root.title())
-                print(FileOpenMessage)
-                tkinter.messagebox.showwarning('File Not Found',FileOpenMessage)
-                close()
-        else:
-            tkinter.messagebox.showwarning('Connection Error','Not connected to HSDE-ES DB.')
-            close()
- 
         clipboard = static_vals['createClipboard']
 
 ### Sets production http can be removed.
 
- 
-        pre_production = static_vals['pre_production']
-#        print('pre_production =', pre_production)
- 
-        # if pre_production == "TRUE":
-        #     url = 'https://hsdes-api-pre.intel.com/rest/article'
-        #     linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
-        #     icon = 'dependencies/Y.png'
-        #     print('pre_production mode')
-        # else:
-        #     url = 'https://hsdes-api.intel.com/rest/article'
-        #     linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
-        #     icon = 'dependencies/B.png'
-        #     print('production mode')
-        # UpdateIcon()
- 
         #Create List for WorkWeek OptionMenu
         i = 1
         WorkWeekList = []
@@ -331,13 +491,16 @@ class App():
             i += 1
 
         # Create Pulldown OptionMenu boxes with tooltips
-        project_options_267=ttk.OptionMenu(root,project_option_selected,*project_options)
-        project_options_267['tooltip'] = 'Choose program / project.'
-        project_options_267.place(x=10,y=69,width=150,height=25)
+        # load full project list
+        
+        
+        project_menu=ttk.OptionMenu(root,project_option_selected,*project_options)
+        project_menu['tooltip'] = 'Choose program / project.'
+        project_menu.place(x=10,y=69,width=150,height=25)
  
-        site_options267=ttk.OptionMenu(root,site_option_selected,*sites_options)
-        site_options267['tooltip'] = 'Choose Site.'
-        site_options267.place(x=168,y=69,width=150,height=25)
+        site_menu=ttk.OptionMenu(root,site_option_selected,*site_options)
+        site_menu['tooltip'] = 'Choose Site.'
+        site_menu.place(x=168,y=69,width=150,height=25)
         
         Option_101=ttk.OptionMenu(root,WorkWeekValue_Inside,*WorkWeekList)
         Option_101['tooltip'] = 'Choose todays known work week for power on.'
@@ -350,152 +513,27 @@ class App():
         YearValue_Inside.set(year)
  
         # Create labels for pulldown Boxes
-        #Program Label
-        Label_Program=tk.Label(root)
-        Label_Program["anchor"] = "c"
-        ft = tkFont.Font(family='Times',size=14)
-        Label_Program["font"] = ft
-        Label_Program["fg"] = "#333333"
-        Label_Program["justify"] = "left"
-        Label_Program["text"] = "Program"
-        Label_Program["background"] = menu_color
-        Label_Program.place(x=10,y=41,width=150,height=25)
- 
-        #Site Label
-        Label_Site=tk.Label(root)
-        Label_Site["anchor"] = "c"
-        ft = tkFont.Font(family='Times',size=14)
-        Label_Site["font"] = ft
-        Label_Site["fg"] = "#333333"
-        Label_Site["justify"] = "center"
-        Label_Site["text"] = "Site"
-        Label_Site["background"] = menu_color
-        Label_Site.place(x=168,y=41,width=150,height=25)
- 
-        #Power On Date Label
-        Label_PODate=tk.Label(root)
-        Label_PODate["anchor"] = "c"
-        ft = tkFont.Font(family='Times',size=14)
-        Label_PODate["font"] = ft
-        Label_PODate["fg"] = "#333333"
-        Label_PODate["justify"] = "left"
-        Label_PODate["text"] = "Power On Date"
-        Label_PODate["background"] = menu_color
-        Label_PODate.place(x=330,y=41,width=150,height=25)
- 
-        #WorkWeek Label
-        Label_WorkWeek=tk.Label(root)
-        Label_WorkWeek["anchor"] = "e"
-        ft = tkFont.Font(family='Times',size=10)
-        Label_WorkWeek["font"] = ft
-        Label_WorkWeek["fg"] = "#333333"
-        Label_WorkWeek["justify"] = "right"
-        Label_WorkWeek["text"] = "Work Week"
-        Label_WorkWeek["background"] = menu_color
-        Label_WorkWeek.place(x=330,y=69,width=70,height=25)
- 
-        #Year Label
-        Label_Year=tk.Label(root)
-        Label_Year["anchor"] = "c"
-        ft = tkFont.Font(family='Times',size=10)
-        Label_Year["font"] = ft
-        Label_Year["fg"] = "#333333"
-        Label_Year["justify"] = "right"
-        Label_Year["text"] = "Year"
-        Label_Year["background"] = menu_color
-        Label_Year.place(x=370,y=99,width=30,height=25)
 
- 
-        def AdvancedCheck():
-                if var101.get() == 1:
-                    print('Awake')
-                    MS_option1.configure(state="enabled")
-                    MS_option2.configure(state="enabled")
-                    MS_option3.configure(state="enabled")
-                    MS_option4.configure(state="enabled")
-                    MS_option5.configure(state="enabled")
-                    MS_option6.configure(state="enabled")
-                    MS_option7.configure(state="enabled")
-                    MS_option8.configure(state="enabled")
-                    MS_option9.configure(state="enabled")
- 
-                    entry_1.configure(state= "normal")
-                    entry_2.configure(state= "normal")
-                    entry_3.configure(state= "normal")
-                    entry_4.configure(state= "normal")
-                    entry_5.configure(state= "normal")
-                    entry_6.configure(state= "normal")
-                    entry_7.configure(state= "normal")
-                    entry_8.configure(state= "normal")
-                    entry_9.configure(state= "normal")
- 
-                    button_clear1["state"] = "normal"
-                    button_clear2["state"] = "normal"
-                    button_clear3["state"] = "normal"
-                    button_clear4["state"] = "normal"
-                    button_clear5["state"] = "normal"
-                    button_clear6["state"] = "normal"
-                    button_clear7["state"] = "normal"
-                    button_clear8["state"] = "normal"
-                    button_clear9["state"] = "normal"
- 
-                elif var101.get() == 0:
-                    print('Sleeping')
-                    MS_option1.configure(state="disabled")
-                    MS_option2.configure(state="disabled")
-                    MS_option3.configure(state="disabled")
-                    MS_option4.configure(state="disabled")
-                    MS_option5.configure(state="disabled")
-                    MS_option6.configure(state="disabled")
-                    MS_option7.configure(state="disabled")
-                    MS_option8.configure(state="disabled")
-                    MS_option9.configure(state="disabled")
- 
-                    entry_1.configure(state= "disabled")
-                    entry_2.configure(state= "disabled")
-                    entry_3.configure(state= "disabled")
-                    entry_4.configure(state= "disabled")
-                    entry_5.configure(state= "disabled")
-                    entry_6.configure(state= "disabled")
-                    entry_7.configure(state= "disabled")
-                    entry_8.configure(state= "disabled")
-                    entry_9.configure(state= "disabled")
-                    button_clear1["state"] = "disabled"
- 
-                    button_clear1["state"] = "disabled"
-                    button_clear2["state"] = "disabled"
-                    button_clear3["state"] = "disabled"
-                    button_clear4["state"] = "disabled"
-                    button_clear5["state"] = "disabled"
-                    button_clear6["state"] = "disabled"
-                    button_clear7["state"] = "disabled"
-                    button_clear8["state"] = "disabled"
-                    button_clear9["state"] = "disabled"
-                else:
-                    messagebox.showerror('OOPS', 'Something went wrong!')
- 
- 
- 
-        Label_optional_MS=tk.Label(root)
-        Label_optional_MS["anchor"] = "w"
-        ft = tkFont.Font(family='Times',size=8, weight='bold')
-        Label_optional_MS["font"] = ft
-        Label_optional_MS["fg"] = "#333333"
-        Label_optional_MS["justify"] = "left"
-        Label_optional_MS["text"] = "Milestone"
-        Label_optional_MS["relief"] = "flat"
-        Label_optional_MS.place(x=497,y=154,width=55,height=15)
- 
-        Label_optional_text=tk.Label(root)
-        Label_optional_text["anchor"] = "w"
-        ft = tkFont.Font(family='Times',size=8, weight='bold')
-        Label_optional_text["font"] = ft
-        Label_optional_text["fg"] = "#333333"
-        Label_optional_text["justify"] = "left"
-        Label_optional_text["text"] = "Text to append to ticket title."
-        Label_optional_text["relief"] = "flat"
-        Label_optional_text.place(x=557,y=154,width=250,height=15)
- 
+        # Program Label
+        Label_Program = tk.Label(root, text="Program", font=("Times", 14), fg="#333333", bg=menu_color, anchor="c", justify="left")
+        Label_Program.place(x=10, y=41, width=150, height=25)
+
+        # Site Label
+        Label_Site = tk.Label(root, text="Site", font=("Times", 14), fg="#333333", bg=menu_color, anchor="c", justify="center")
+        Label_Site.place(x=168, y=41, width=150, height=25)
+
+        # Power On Date Label
+        Label_PODate = tk.Label(root, text="Power On Date", font=("Times", 14), fg="#333333", bg=menu_color, anchor="c", justify="left")
+        Label_PODate.place(x=330, y=41, width=150, height=25)
+
+        # WorkWeek Label
+        Label_WorkWeek = tk.Label(root, text="WW#", font=("Times", 14), fg="#333333", bg=menu_color, anchor="e", justify="right")
+        Label_WorkWeek.place(x=330, y=69, width=70, height=25)
+
+        #Year Label
+        Label_Year = tk.Label(root, text="Year", font=("Times", 14), fg="#333333", bg=menu_color, anchor="e", justify="right")
+        Label_Year.place(x=330, y=99, width=70, height=25)
+
         self.varSelectAll=tk.IntVar(root)
         self.CheckBox_SelectAll=tk.Checkbutton(root)
         self.CheckBox_SelectAll["anchor"] = "w"
@@ -504,7 +542,7 @@ class App():
         self.CheckBox_SelectAll["fg"] = "#333333"
         self.CheckBox_SelectAll["justify"] = "left"
         self.CheckBox_SelectAll["text"] = "Select All"
-        self.CheckBox_SelectAll.place(x=10,y=156,width=80,height=25)
+        self.CheckBox_SelectAll.place(x=10,y=156,width=110,height=25)
         self.CheckBox_SelectAll["offvalue"] = "0"
         self.CheckBox_SelectAll["onvalue"] = "1"
         self.CheckBox_SelectAll["command"] = self.CheckBox_SelectAll_command
@@ -513,262 +551,7 @@ class App():
  
  ########################################################################################
  #########  Create milestone check boxes
-        #print(dynamic_vals)
-        print('')
- 
-        try:
-            var11=tk.IntVar(root)
-            self.CheckBox_11=tk.Checkbutton(root)
-            self.CheckBox_11["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_11["font"] = ft
-            self.CheckBox_11["fg"] = "#333333"
-            self.CheckBox_11["justify"] = "left"
-            self.CheckBox_11["text"] = dynamic_vals["112"]["cb_title"]
-            self.CheckBox_11.place(x=10,y=196,width=490,height=25)
-            self.CheckBox_11["offvalue"] = "0"
-            self.CheckBox_11["onvalue"] = "1"
-            self.CheckBox_11["variable"] = var11
-            self.CheckBox_11.select()
-        except:
-            print("No 1.1 Milestone")
-
-        try:
-            var21=IntVar()
-            self.CheckBox_21=tk.Checkbutton(root)
-            self.CheckBox_21["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_21["font"] = ft
-            self.CheckBox_21["fg"] = "#333333"
-            self.CheckBox_21["justify"] = "left"
-            self.CheckBox_21["text"] = dynamic_vals["212"]["cb_title"]
-            self.CheckBox_21.place(x=10,y=226,width=490,height=25)
-            self.CheckBox_21["offvalue"] = "0"
-            self.CheckBox_21["onvalue"] = "1"
-            self.CheckBox_21["variable"] = var21
-            self.CheckBox_21.select()
-        except:
-            print("N0 2.1 Milestone")
-    
-        try:
-            var22=IntVar()
-            self.CheckBox_22=tk.Checkbutton(root)
-            self.CheckBox_22["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_22["font"] = ft
-            self.CheckBox_22["fg"] = "#333333"
-            self.CheckBox_22["justify"] = "left"
-            self.CheckBox_22["text"] = dynamic_vals["224"]["cb_title"]
-            self.CheckBox_22.place(x=10,y=256,width=490,height=25)
-            self.CheckBox_22["offvalue"] = "0"
-            self.CheckBox_22["onvalue"] = "1"
-            self.CheckBox_22["variable"] = var22
-            self.CheckBox_22.select()
-        except:
-            print("N0 2.2 Milestone")
-    
-        try:
-            var31=IntVar()
-            self.CheckBox_31=tk.Checkbutton(root)
-            self.CheckBox_31["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_31["font"] = ft
-            self.CheckBox_31["fg"] = "#333333"
-            self.CheckBox_31["justify"] = "left"
-            self.CheckBox_31["text"] = dynamic_vals["311"]["cb_title"]
-            self.CheckBox_31.place(x=10,y=286,width=490,height=25)
-            self.CheckBox_31["offvalue"] = "0"
-            self.CheckBox_31["onvalue"] = "1"
-            self.CheckBox_31["variable"] = var31
-            self.CheckBox_31.select()
-        except:
-            print("N0 3.1 Milestone")
-    
-        try:
-            var32=IntVar()
-            self.CheckBox_32=tk.Checkbutton(root)
-            self.CheckBox_32["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_32["font"] = ft
-            self.CheckBox_32["fg"] = "#333333"
-            self.CheckBox_32["justify"] = "left"
-            self.CheckBox_32["text"] = dynamic_vals["321"]["cb_title"]
-            self.CheckBox_32.place(x=10,y=316,width=490,height=25)
-            self.CheckBox_32["offvalue"] = "0"
-            self.CheckBox_32["onvalue"] = "1"
-            self.CheckBox_32["variable"] = var32
-            self.CheckBox_32.select()
-        except:
-            print("N0 3.2 Milestone")
-
-        try:
-            var41=IntVar()
-            self.CheckBox_41=tk.Checkbutton(root)
-            self.CheckBox_41["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_41["font"] = ft
-            self.CheckBox_41["fg"] = "#333333"
-            self.CheckBox_41["justify"] = "left"
-            self.CheckBox_41["text"] = dynamic_vals["411"]["cb_title"]
-            self.CheckBox_41.place(x=10,y=346,width=490,height=25)
-            self.CheckBox_41["offvalue"] = "0"
-            self.CheckBox_41["onvalue"] = "1"
-            self.CheckBox_41["variable"] = var41
-            self.CheckBox_41.select()
-        except:
-            print("N0 4.1 Milestone")
-        try:
-            var42=IntVar()
-            self.CheckBox_42=tk.Checkbutton(root)
-            self.CheckBox_42["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_42["font"] = ft
-            self.CheckBox_42["fg"] = "#333333"
-            self.CheckBox_42["justify"] = "left"
-            self.CheckBox_42["text"] = dynamic_vals["421"]["cb_title"]
-            self.CheckBox_42.place(x=10,y=376,width=490,height=25)
-            self.CheckBox_42["offvalue"] = "0"
-            self.CheckBox_42["onvalue"] = "1"
-            self.CheckBox_42["variable"] = var42
-            self.CheckBox_42.select()
-        except:
-            print("N0 4.2 Milestone")
-    
-        try:
-            var43=IntVar()
-            self.CheckBox_43=tk.Checkbutton(root)
-            self.CheckBox_43["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_43["font"] = ft
-            self.CheckBox_43["fg"] = "#333333"
-            self.CheckBox_43["justify"] = "left"
-            self.CheckBox_43["text"] = dynamic_vals["431"]["cb_title"]
-            self.CheckBox_43.place(x=10,y=406,width=490,height=25)
-            self.CheckBox_43["offvalue"] = "0"
-            self.CheckBox_43["onvalue"] = "1"
-            self.CheckBox_43["variable"] = var43
-            self.CheckBox_43.select()
-        except:
-            print("N0 4.3 Milestone")
-    
-        try:
-            var51=IntVar()
-            self.CheckBox_51=tk.Checkbutton(root)
-            self.CheckBox_51["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_51["font"] = ft
-            self.CheckBox_51["fg"] = "#333333"
-            self.CheckBox_51["justify"] = "left"
-            self.CheckBox_51["text"] = dynamic_vals["511"]["cb_title"]
-            self.CheckBox_51.place(x=10,y=436,width=490,height=25)
-            self.CheckBox_51["offvalue"] = "0"
-            self.CheckBox_51["onvalue"] = "1"
-            self.CheckBox_51["variable"] = var51
-            self.CheckBox_51.select()
-        except:
-            print("N0 5.1 Milestone")
-    
-        try:
-            var61=IntVar()
-            self.CheckBox_61=tk.Checkbutton(root)
-            self.CheckBox_61["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_61["font"] = ft
-            self.CheckBox_61["fg"] = "#333333"
-            self.CheckBox_61["justify"] = "left"
-            self.CheckBox_61["text"] = dynamic_vals["611"]["cb_title"]
-            self.CheckBox_61.place(x=10,y=466,width=490,height=25)
-            self.CheckBox_61["offvalue"] = "0"
-            self.CheckBox_61["onvalue"] = "1"
-            self.CheckBox_61["variable"] = var61
-            self.CheckBox_61.select()
-        except:
-            print("N0 6.1 Milestone")
-    
-        try:
-            var62=IntVar()
-            self.CheckBox_62=tk.Checkbutton(root)
-            self.CheckBox_62["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_62["font"] = ft
-            self.CheckBox_62["fg"] = "#333333"
-            self.CheckBox_62["justify"] = "left"
-            self.CheckBox_62["text"] = dynamic_vals["621"]["cb_title"]
-            self.CheckBox_62.place(x=10,y=496,width=490,height=25)
-            self.CheckBox_62["offvalue"] = "0"
-            self.CheckBox_62["onvalue"] = "1"
-            self.CheckBox_62["variable"] = var62
-            self.CheckBox_62.select()
-        except:
-            print("N0 6.2 Milestone")
-    
-        try:
-            var71=IntVar()
-            self.CheckBox_71=tk.Checkbutton(root)
-            self.CheckBox_71["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_71["font"] = ft
-            self.CheckBox_71["fg"] = "#333333"
-            self.CheckBox_71["justify"] = "left"
-            self.CheckBox_71["text"] = dynamic_vals["711"]["cb_title"]
-            self.CheckBox_71.place(x=10,y=526,width=490,height=25)
-            self.CheckBox_71["offvalue"] = "0"
-            self.CheckBox_71["onvalue"] = "1"
-            self.CheckBox_71["variable"] = var71
-            self.CheckBox_71.select()
-        except:
-            print("N0 7.1 Milestone")
-    
-    
-        try:
-            var81=IntVar()
-            self.CheckBox_81=tk.Checkbutton(root)
-            self.CheckBox_81["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_81["font"] = ft
-            self.CheckBox_81["fg"] = "#333333"
-            self.CheckBox_81["justify"] = "left"
-            self.CheckBox_81["text"] = dynamic_vals["811"]["cb_title"]
-            self.CheckBox_81.place(x=10,y=556,width=490,height=25)
-            self.CheckBox_81["offvalue"] = "0"
-            self.CheckBox_81["onvalue"] = "1"
-            self.CheckBox_81["variable"] = var81
-            self.CheckBox_81.select()
-        except:
-            print("N0 8.1 Milestone")
-
-        try:
-            var91=IntVar()
-            self.CheckBox_91=tk.Checkbutton(root)
-            self.CheckBox_91["anchor"] = "w"
-            ft = tkFont.Font(family='Times',size=10)
-            self.CheckBox_91["font"] = ft
-            self.CheckBox_91["fg"] = "#333333"
-            self.CheckBox_91["justify"] = "left"
-            self.CheckBox_91["text"] = dynamic_vals["911"]["cb_title"]
-            self.CheckBox_91.place(x=10,y=586,width=490,height=25)
-            self.CheckBox_91["offvalue"] = "0"
-            self.CheckBox_91["onvalue"] = "1"
-            self.CheckBox_91["variable"] = var91
-            self.CheckBox_91.select()
-        except:
-            print("No 9.1 Milestone")
-        ###/NEW
- 
-        var101=IntVar()
-        self.CheckBox_101=tk.Checkbutton(root)
-        self.CheckBox_101["anchor"] = "w"
-        ft = tkFont.Font(family='Times',size=10)
-        self.CheckBox_101["font"] = ft
-        self.CheckBox_101["fg"] = "#333333"
-        self.CheckBox_101["justify"] = "left"
-        self.CheckBox_101["text"] = "Optional: Add additional tickets per milestone."
-        self.CheckBox_101.place(x=495,y=134,width=490,height=20)
-        self.CheckBox_101["variable"] = var101
-        self.CheckBox_101["command"] = AdvancedCheck
-        self.CheckBox_101.setvar = False
-     ############################################################################################################################################
-        
+        get_checkboxes()
 
         
         #Milestones Label
@@ -804,7 +587,6 @@ class App():
             headers = { 'Content-type': 'application/json' }
             subject = "support"
             tenant = "services_sys_val"
- 
             title = fields["title"]
             description = fields["description"]
             service_type = fields["service_type"]
@@ -822,7 +604,10 @@ class App():
             survey_comment = fields["survey_comment"]
             send_mail = "false"
  
-            if pre_production == "TRUE":
+ 
+        ### Required because Pre and Prod HSD dont have the same fields. Need to submit Ticket to 
+        ### Have them synced then wont need to pass different sets of variables.
+            if switch_var.get() == 'Pre-Prod':
                 lab = fields['lab']
                 print('Pre-Production Mode')
                 payload = {
@@ -988,6 +773,10 @@ class App():
             global url
             global linkUrl
             global icon
+            global checkboxes
+            global variables
+            global checkbox_dict
+            global linkCollection
             
             not_ready=''
             not_ready1=''
@@ -1009,10 +798,11 @@ class App():
                     Label_ProgressSuccess["text"]= "Connecting to HSD-ES DB"
                     root.after(1,Label_ProgressSuccess.update())
                     
-                    selected_site=site_option_selected.get()
-                    selected_lab=lab_dict[selected_site]
-                    selected_notify=notify_dict[selected_site]
-                    selected_lead=lead_dict[selected_site]
+                    selected_site = site_option_selected.get()
+                    selected_lab = lab_dict[selected_site]
+                    selected_notify = notify_dict[selected_site]
+                    selected_lead = lead_dict[selected_site]
+
  
                     print("Selected Program: {}".format(project_option_selected.get()))
                     print("Selected Site: " + selected_site)
@@ -1021,82 +811,51 @@ class App():
                     print("Selected Customer: " + selected_lead)
                     print("Selected Notify PDL: " + selected_notify)
                     print("Selected Lab: " + selected_lab)
-                    print("11 CheckBox: {}".format(var11.get()))
-                    print("21 CheckBox: {}".format(var21.get()))
-                    print("22 CheckBox: {}".format(var22.get()))
-                    print("31 CheckBox: {}".format(var31.get()))
-                    print("32 CheckBox: {}".format(var32.get()))
-                    print("41 CheckBox: {}".format(var41.get()))
-                    print("42 CheckBox: {}".format(var42.get()))
-                    print("43 CheckBox: {}".format(var43.get()))
-                    print("51 CheckBox: {}".format(var51.get()))
-                    print("61 CheckBox: {}".format(var61.get()))
-                    print("62 CheckBox: {}".format(var62.get()))
-                    #print("63 CheckBox: {}".format(var63.get()))
-                    print("71 CheckBox: {}".format(var71.get()))
-                    print("81 CheckBox: {}".format(var81.get()))
-                    print("91 CheckBox: {}".format(var91.get()))
- 
-                    #Create a Dict to store the Checkbox values for each milestone
-                    checkbox_dict={}
-                    if dynamic_CSV_file == "Original":
-                        checkbox_dict.update({"11":int(var11.get())})
-                        checkbox_dict.update({"21":int(var21.get())})
-                        checkbox_dict.update({"22":int(var22.get())})
-                        checkbox_dict.update({"31":int(var31.get())})
-                        checkbox_dict.update({"32":int(var32.get())})
-                        checkbox_dict.update({"41":int(var41.get())})
-                        checkbox_dict.update({"42":int(var42.get())})
-                        checkbox_dict.update({"43":int(var43.get())})
-                        checkbox_dict.update({"51":int(var51.get())})
-                        checkbox_dict.update({"61":int(var61.get())})
-                        checkbox_dict.update({"62":int(var62.get())})
-                        #checkbox_dict.update({"63":int(var63.get())})
-                        checkbox_dict.update({"71":int(var71.get())})
-                        checkbox_dict.update({"81":int(var81.get())})
-                        checkbox_dict.update({"91":int(var91.get())})
-                    else: # PO and VV Tickets Also default for "New"
-                        checkbox_dict.update({"111":int(var11.get())})
-                        checkbox_dict.update({"211":int(var21.get())})
-                        checkbox_dict.update({"221":int(var22.get())})
-                        checkbox_dict.update({"311":int(var31.get())})
-                        checkbox_dict.update({"321":int(var32.get())})
-                        checkbox_dict.update({"411":int(var41.get())})
-                        checkbox_dict.update({"421":int(var42.get())})
-                        checkbox_dict.update({"431":int(var43.get())})
-                        checkbox_dict.update({"511":int(var51.get())})
-                        checkbox_dict.update({"611":int(var61.get())})
-                        checkbox_dict.update({"621":int(var62.get())})
-                        #checkbox_dict.update({"631":int(var63.get())})
-                        checkbox_dict.update({"711":int(var71.get())})
-                        checkbox_dict.update({"811":int(var81.get())})
-                        checkbox_dict.update({"911":int(var91.get())})
-                    #add Advance milestones
-                    checkbox_dict.update({"101":int(1)})
-          
+
+
+### Checkbox check for keystone check boxes, Comment out for production                    
+                    # for key, value in variables.items():
+                    #     status = value['variable'].get()
+                    #     text = value['text']
+                    #     print("Status of checkbox ({} - {}): {}".format(key, text, status))
+### End Checkbox check
+                    
+                    for key, value in variables.items():
+                        checkbox_dict.update({value['mile'].split('.')[0]:int(value['variable'].get())})
+
                     #Create a List of Dicts to store the complete tictet information. One ticket per row
                     fieldlist=[]
- 
+
+### Test check for tickets that will be created based on check boxes  Comment out for deployment
+                    print("")
+                    print("##########################")
+                    print("## HSD Milestone Status ##")
+                    print("##########################")
+                    for name, milestone in milestones.items():
+                        # Retrieve the value associated with the key 'mile'
+                        mile_value = milestone.get('mile').split('.')[0]
+                        if checkbox_dict[mile_value] == 1:
+                            print(f"  Enabled - {milestone.get('cb_title')} {milestone.get('title')}")
+                        else:
+                            print(f"  Disabled - {milestone.get('cb_title')} {milestone.get('title')}") 
+### end Test check
+
                     dictionaryloop=1
                     if dictionaryloop==1:
- 
-                        for milestone in dynamic_vals.keys(): #Original Loop
- 
-                            #Check if Milestones Checkbox is selected
-                            if len(milestone) > 2:
-                                milestone_check = milestone[:2]+"1"
-                            else:
-                                milestone_check = milestone
- 
-                            if checkbox_dict.get(milestone_check) == 1:
+                        print("")
+                        print("")
+                        for name, milestone in milestones.items():
+                            # Retrieve the value associated with the key 'mile'
+                            mile_value = milestone.get('mile').split('.')[0]
+                            if checkbox_dict[mile_value] == 1:
                                 _title={}
-                                _title["title"]=dynamic_vals[milestone]["title"]
+                                _title["title"]=milestone.get('title')
                                         
                                 _description={}
-                                _description["description"]=dynamic_vals[milestone]["description"]
+                                _description["description"]=milestone.get("description")
  
                                 _required_by_milestone={}
-                                _required_by_milestone["required_by_milestone"]=dynamic_vals[milestone]["required_by_milestone"]
+                                _required_by_milestone["required_by_milestone"]=milestone.get("required_by_milestone")
  
                                 _lab_org={}
                                 _lab_org["lab_org"]=static_vals.get("lab_org")
@@ -1131,14 +890,12 @@ class App():
                                 _milestone_eta={}
                                 d = YearValue_Inside.get()+WorkWeekValue_Inside.get()
                                 r = datetime.datetime.strptime(d + '-1', "%Y%W-%w")
-                                x = r - timedelta(weeks = int(dynamic_vals[milestone]["ETA_WW"]))
+                                x = r - timedelta(weeks = int(milestone.get("ETA_WW")))
                                 year = str(x.isocalendar()[0])
                                 week = str(x.isocalendar()[1]).zfill(2)
-                       #         week = str(x.isocalendar().week).zfill(2)
                                 milestoneww = (year + "-" + week)
                                 _milestone_eta["milestone_eta"]=milestoneww
-                                print("milestone ww = "+ milestoneww + " milestone = "+ milestone)
- 
+
                                 _service_type={}
                                 _service_type["service_type"]=static_vals.get("service_type")
  
@@ -1146,8 +903,6 @@ class App():
                                 _service_sub_type["service_sub_type"]=static_vals.get("service_sub_type")
  
                                 _survey_comment={}
-
-                                print(dynamic_vals[milestone]["ticket"])
                                 _survey_comment["survey_comment"]=static_vals.get("survey_comment")
  
                                 _lab={'lab': selected_lab}
@@ -1176,154 +931,8 @@ class App():
                                 line_dict.update(_lab)
                                 fieldlist.append(line_dict)
  
-                    if var101.get() == 1: #create advance tickets
-                        #********************
-                        print('awake')
-                        
-                        option_advance_dict={}
-                        entry_advance_dict={}
-                        # Where Milestone option number and additional title both have data add values to specific DB
-                        if not entry_1.get() == '':
-                            if not MS_1_selected.get() == '':
-                                option_advance_dict.update({"MS1":(MS_1_selected.get())})
-                                entry_advance_dict.update({"MS1":(entry_1.get())})
+                                print("Creating - milestone ww = "+ str(milestoneww) + " " + milestone.get("title"))
  
-                        if not entry_2.get() == '':
-                            if not MS_2_selected.get() == '':
-                                option_advance_dict.update({"MS2":(MS_2_selected.get())})
-                                entry_advance_dict.update({"MS2":(entry_2.get())})
- 
-                        if not entry_3.get() == '':
-                            if not MS_3_selected.get() == '':
-                                option_advance_dict.update({"MS3":(MS_3_selected.get())})
-                                entry_advance_dict.update({"MS3":(entry_3.get())})
- 
-                        if not entry_4.get() == '':
-                            if not MS_4_selected.get() == '':
-                                option_advance_dict.update({"MS4":(MS_4_selected.get())})
-                                entry_advance_dict.update({"MS4":(entry_4.get())})
- 
-                        if not entry_5.get() == '':
-                            if not MS_5_selected.get() == '':
-                                option_advance_dict.update({"MS5":(MS_5_selected.get())})
-                                entry_advance_dict.update({"MS5":(entry_5.get())})
- 
-                        if not entry_6.get() == '':
-                            if not MS_6_selected.get() == '':
-                                option_advance_dict.update({"MS6":(MS_6_selected.get())})
-                                entry_advance_dict.update({"MS6":(entry_6.get())})
- 
-                        if not entry_7.get() == '':
-                            if not MS_7_selected.get() == '':
-                                option_advance_dict.update({"MS7":(MS_7_selected.get())})
-                                entry_advance_dict.update({"MS7":(entry_7.get())})
- 
-                        if not entry_8.get() == '':
-                            if not MS_8_selected.get() == '':
-                                option_advance_dict.update({"MS8":(MS_8_selected.get())})
-                                entry_advance_dict.update({"MS8":(entry_8.get())})
- 
-                        if not entry_9.get() == '':
-                            if not MS_9_selected.get() == '':
-                                option_advance_dict.update({"MS9":(MS_9_selected.get())})
-                                entry_advance_dict.update({"MS9":(entry_9.get())})
- 
-                        for a in option_advance_dict:                            
-                            milestone = option_advance_dict[a]
-                            milestone =  milestone.replace(".","")
-                            append_title = entry_advance_dict[a]
- 
-                            if dynamic_CSV_file == 'Original':
-                                print(append_title)
-                            if dynamic_CSV_file == 'PO':
-                                milestone_check = milestone + "1"
-                            if dynamic_CSV_file == 'VV':
-                                milestone_check = milestone + "1"
- 
-                            _title={}
-                            _title["title"]=dynamic_vals[milestone_check]["cb_title"]+" - "+append_title
-                                        
-                            _description={}
-                            _description["description"]=dynamic_vals[milestone_check]["description"]
- 
-                            _required_by_milestone={}
-                            _required_by_milestone["required_by_milestone"]=dynamic_vals[milestone_check]["required_by_milestone"]
- 
-                            _lab_org={}
-                            _lab_org["lab_org"]=static_vals.get("lab_org")
- 
-                            _org_unit={}
-                            _org_unit["org_unit"]=static_vals.get("org_unit")
- 
-                            _category={}
-                            _category["category"]=static_vals.get("category")
- 
-                            _component={}
-                            _component["component"]=static_vals.get("component")
- 
-                            _priority={}
-                            _priority["priority"]=static_vals.get("priority")
- 
-                            _status={}
-                            _status["status"]=static_vals.get("status")
- 
-                            _reason={}
-                            _reason["reason"]=static_vals.get("reason")
- 
-                            _customer_contact={}
-                            _customer_contact["customer_contact"]=selected_lead
- 
-                            _site={}
-                            _site["site"]=selected_site
- 
-                            _program={}
-                            _program["program"]=project_option_selected.get()
- 
-                            _milestone_eta={}
-                            d = YearValue_Inside.get()+WorkWeekValue_Inside.get()
-                            r = datetime.strptime(d + '-1', "%Y%W-%w")
-                            x = r - timedelta(weeks = int(dynamic_vals[milestone_check]["ETA_WW"]))
-                            year = str(x.isocalendar().year)
-                            week = str(x.isocalendar().week).zfill(2)
-                            milestone = (year + week)
-                            _milestone_eta["milestone_eta"]=milestone
- 
-                            _service_type={}
-                            _service_type["service_type"]=static_vals.get("service_type")
- 
-                            _service_sub_type={}
-                            _service_sub_type["service_sub_type"]=static_vals.get("service_sub_type")
- 
-                            _survey_comment={}
-
-                        _survey_comment["survey_comment"]=static_vals.get("survey_comment")
-                        _lab={'lab': selected_lab}
-                        _notify={'notify': selected_notify}
-                        
-                        line_dict={}
-                        line_dict.update(_title)
-                        line_dict.update(_description)
-                        line_dict.update(_lab_org)
-                        line_dict.update(_org_unit)
-                        line_dict.update(_category)
-                        line_dict.update(_component)
-                        line_dict.update(_priority)
-                        line_dict.update(_status)
-                        line_dict.update(_reason)
-                        line_dict.update(_customer_contact)
-                        line_dict.update(_notify)
-                        line_dict.update(_site)
-                        line_dict.update(_program)
-                        line_dict.update(_milestone_eta)
-                        line_dict.update(_service_type)
-                        line_dict.update(_service_sub_type)
-                        line_dict.update(_required_by_milestone)
-                        line_dict.update(_survey_comment)
-                        line_dict.update(_lab)
-
-                        fieldlist.append(line_dict)
- 
-                    #********************
                     print("")
  
                     #Count List lines
@@ -1347,7 +956,7 @@ class App():
                         tickets = []
                         errors = []
                         HSD_ID = []
-                        get_hsd_url()
+                        
                         print("Using - " + str(url))
                         print("Using - " + str(linkUrl))
                         
@@ -1434,51 +1043,6 @@ class App():
         entry_2 = tk.Entry(root)
         entry_3 = tk.Entry(root)
  
-        def clear_advance_row1():
-            print ('Clear Row 1')
-            MS_1_selected.set("")
-            entry_1.delete(0, tk.END)
- 
-        def clear_advance_row2():
-            print ('Clear Row 2')
-            MS_2_selected.set("")
-            entry_2.delete(0, tk.END)
- 
-        def clear_advance_row3():
-            print ('Clear Row 3')
-            MS_3_selected.set("")
-            entry_3.delete(0, tk.END)
- 
-        def clear_advance_row4():
-            print ('Clear Row 4')
-            MS_4_selected.set("")
-            entry_4.delete(0, tk.END)
- 
-        def clear_advance_row5():
-            print ('Clear Row 5')
-            MS_5_selected.set("")
-            entry_5.delete(0, tk.END)
- 
-        def clear_advance_row6():
-            print ('Clear Row 6')
-            MS_6_selected.set("")
-            entry_6.delete(0, tk.END)
- 
-        def clear_advance_row7():
-            print ('Clear Row 7')
-            MS_7_selected.set("")
-            entry_7.delete(0, tk.END)
- 
-        def clear_advance_row8():
-            print ('Clear Row 8')
-            MS_8_selected.set("")
-            entry_8.delete(0, tk.END)
- 
-        def clear_advance_row9():
-            print ('Clear Row 9')
-            MS_9_selected.set("")
-            entry_9.delete(0, tk.END)
- 
         ProgressBar=ttk.Progressbar(root)
         ProgressBar.place(x=6,y=665,width=480,height=10)
  
@@ -1500,195 +1064,17 @@ class App():
         Button_advance.place(x=417,y=162,width=65,height=30)
         Button_advance["command"] = advance_window
  
-        #-----------------------------------------------------------------------------------------------------------------------------
-        #Advance Options
-        MS_1_selected = tk.StringVar(root)
-        MS_option1=ttk.OptionMenu(root,MS_1_selected,*MS_options)
-        MS_option1['tooltip'] = 'Choose Milestone.'
-        MS_option1.place(x=500,y=171,width=54,height=25)
-        MS_option1.configure(state="disabled")
- 
-        
-        MS_option2=ttk.OptionMenu(root,MS_2_selected,*MS_options)
-        MS_option2['tooltip'] = 'Choose Milestone.'
-        MS_option2.place(x=500,y=201,width=54,height=25)
-        MS_option2.configure(state="disabled")
- 
-        
-        MS_option3=ttk.OptionMenu(root,MS_3_selected,*MS_options)
-        MS_option3['tooltip'] = 'Choose Milestone.'
-        MS_option3.place(x=500,y=231,width=54,height=25)
-        MS_option3.configure(state="disabled")
- 
-        MS_4_selected = tk.StringVar(root)
-        MS_option4=ttk.OptionMenu(root,MS_4_selected,*MS_options)
-        MS_option4['tooltip'] = 'Choose Milestone.'
-        MS_option4.place(x=500,y=225,width=54,height=25)
-        MS_option4.configure(state="disabled")
- 
-        MS_5_selected = tk.StringVar(root)
-        MS_option5=ttk.OptionMenu(root,MS_5_selected,*MS_options)
-        MS_option5['tooltip'] = 'Choose Milestone.'
-        MS_option5.place(x=500,y=261,width=54,height=25)
-        MS_option5.configure(state="disabled")
- 
-        MS_6_selected = tk.StringVar(root)
-        MS_option6=ttk.OptionMenu(root,MS_6_selected,*MS_options)
-        MS_option6['tooltip'] = 'Choose Milestone.'
-        MS_option6.place(x=500,y=321,width=54,height=25)
-        MS_option6.configure(state="disabled")
- 
-        MS_7_selected = tk.StringVar(root)
-        MS_option7=ttk.OptionMenu(root,MS_7_selected,*MS_options)
-        MS_option7['tooltip'] = 'Choose Milestone.'
-        MS_option7.place(x=500,y=351,width=54,height=25)
-        MS_option7.configure(state="disabled")
- 
-        MS_8_selected = tk.StringVar(root)
-        MS_option8=ttk.OptionMenu(root,MS_8_selected,*MS_options)
-        MS_option8['tooltip'] = 'Choose Milestone.'
-        MS_option8.place(x=500,y=381,width=54,height=25)
-        MS_option8.configure(state="disabled")
- 
-        MS_9_selected = tk.StringVar(root)
-        MS_option9=ttk.OptionMenu(root,MS_9_selected,*MS_options)
-        MS_option9['tooltip'] = 'Choose Milestone.'
-        MS_option9.place(x=500,y=411,width=54,height=25)
-        MS_option9.configure(state="disabled")
- 
- 
-        #Advanced Entry
-        entry_1.place(x=556,y=171,width=282,height=25)
-        entry_1.configure(state= "disabled")
-        
-        entry_2.place(x=556,y=201,width=282,height=25)
-        entry_2.configure(state= "disabled")
-        
-        entry_3.place(x=556,y=231,width=282,height=25)
-        entry_3.configure(state= "disabled")
- 
-        entry_4 = tk.Entry(root)
-        entry_4.place(x=556,y=261,width=282,height=25)
-        entry_4.configure(state= "disabled")
- 
-        entry_5 = tk.Entry(root)
-        entry_5.place(x=556,y=291,width=282,height=25)
-        entry_5.configure(state= "disabled")
- 
-        entry_6 = tk.Entry(root)
-        entry_6.place(x=556,y=321,width=282,height=25)
-        entry_6.configure(state= "disabled")
- 
-        entry_7 = tk.Entry(root)
-        entry_7.place(x=556,y=351,width=282,height=25)
-        entry_7.configure(state= "disabled")
- 
-        entry_8 = tk.Entry(root)
-        entry_8.place(x=556,y=381,width=282,height=25)
-        entry_8.configure(state= "disabled")
- 
-        entry_9 = tk.Entry(root)
-        entry_9.place(x=556,y=411,width=282,height=25)
-        entry_9.configure(state= "disabled")
- 
-        #Advance Buttons
-        Row = 1
-        button_clear1 = tk.Button(root)
-        button_clear1["text"] = "Clear"
-        #button_clear1['tooltip'] = "Clear Entry."
-        button_clear1.place(x=840,y=171,width=45,height=25)
-        button_clear1["command"] = clear_advance_row1
-        button_clear1["state"] = "disabled"
- 
-        button_clear2 = tk.Button(root)
-        button_clear2["text"] = "Clear"
-        #button_clear2["tooltip"] = "Clear Entry."
-        button_clear2.place(x=840,y=201,width=45,height=25)
-        button_clear2["command"] = clear_advance_row2
-        button_clear2["state"] = "disabled"
- 
-        button_clear3 = tk.Button(root)
-        button_clear3["text"] = "Clear"
-        #button_clear3["tooltip"] = "Clear Entry."
-        button_clear3.place(x=840,y=231,width=45,height=25)
-        button_clear3["command"] = clear_advance_row3
-        button_clear3["state"] = "disabled"
- 
-        button_clear4 = tk.Button(root)
-        button_clear4["text"] = "Clear"
-        #button_clear4["tooltip"] = "Clear Entry."
-        button_clear4.place(x=840,y=261,width=45,height=25)
-        button_clear4["command"] = clear_advance_row4
-        button_clear4["state"] = "disabled"
- 
-        button_clear5 = tk.Button(root)
-        button_clear5["text"] = "Clear"
-        #button_clear5["tooltip"] = "Clear Entry."
-        button_clear5.place(x=840,y=291,width=45,height=25)
-        button_clear5["command"] = clear_advance_row5
-        button_clear5["state"] = "disabled"
- 
-        button_clear6 = tk.Button(root)
-        button_clear6["text"] = "Clear"
-        #button_clear6["tooltip"] = "Clear Entry."
-        button_clear6.place(x=840,y=321,width=45,height=25)
-        button_clear6["command"] = clear_advance_row6
-        button_clear6["state"] = "disabled"
- 
-        button_clear7 = tk.Button(root)
-        button_clear7["text"] = "Clear"
-        #button_clear7["tooltip"] = "Clear Entry."
-        button_clear7.place(x=840,y=351,width=45,height=25)
-        button_clear7["command"] = clear_advance_row7
-        button_clear7["state"] = "disabled"
- 
-        button_clear8 = tk.Button(root)
-        button_clear8["text"] = "Clear"
-        #button_clear8["tooltip"] = "Clear Entry."
-        button_clear8.place(x=840,y=381,width=45,height=25)
-        button_clear8["command"] = clear_advance_row8
-        button_clear8["state"] = "disabled"
- 
-        button_clear9 = tk.Button(root)
-        button_clear9["text"] = "Clear"
-        #button_clear9["tooltip"] = "Clear Entry."
-        button_clear9.place(x=840,y=411,width=45,height=25)
-        button_clear9["command"] = clear_advance_row9
-        button_clear9["state"] = "disabled"
- 
     def CheckBox_SelectAll_command(self):
-        if (self.varSelectAll.get()==1):
-            self.CheckBox_11.select()
-            self.CheckBox_21.select()
-            self.CheckBox_22.select()
-            self.CheckBox_31.select()
-            self.CheckBox_32.select()
-            self.CheckBox_41.select()
-            self.CheckBox_42.select()
-            self.CheckBox_43.select()            
-            self.CheckBox_51.select()
-            self.CheckBox_61.select()
-            self.CheckBox_62.select()
-            #self.CheckBox_63.select()
-            self.CheckBox_71.select()
-            self.CheckBox_81.select()
-            self.CheckBox_91.select()
+
+        variables
+        
+        if self.varSelectAll.get() == 1:
+             for checkbox in variables.values():
+                 checkbox['widget'].select()
         else:
-            self.CheckBox_11.deselect()
-            self.CheckBox_21.deselect()
-            self.CheckBox_22.deselect()
-            self.CheckBox_31.deselect()
-            self.CheckBox_32.deselect()
-            self.CheckBox_41.deselect()
-            self.CheckBox_42.deselect()
-            self.CheckBox_43.deselect()
-            self.CheckBox_51.deselect()
-            self.CheckBox_61.deselect()
-            self.CheckBox_62.deselect()
-            #self.CheckBox_63.deselect()
-            self.CheckBox_71.deselect()
-            self.CheckBox_81.deselect()
-            self.CheckBox_91.deselect()
+             for checkbox in variables.values():
+                 checkbox['widget'].deselect()
+
  
 if __name__ == "__main__":
     root = tk.Tk()
