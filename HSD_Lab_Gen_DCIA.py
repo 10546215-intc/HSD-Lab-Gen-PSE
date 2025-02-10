@@ -279,25 +279,25 @@ def get_opt_menu_list(field, name):
         FileOpenMessage = FileOpenMessage + '\ndependencies/static_vals.csv'
     print('static_vals_open = ' + str(static_vals_open))
         
-def get_hsd_url(mode):
-    global url
-    global linkUrl
-    global icon
-    global milestones
-    global auto_c
+# def get_hsd_url(mode):
+#     global url
+#     global linkUrl
+#     global icon
+#     global milestones
+#     global auto_c
     
-    if mode == "Pre-Prod":
-#        mode_label.configure(text="Pre-Production (HSD)")
-        url = 'https://hsdes-api-pre.intel.com/rest/article'
-        linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
-        auto_c = 'https://hsdes-api-pre.intel.com/rest/query/autocomplete/support/services_sys_val/'
-        icon = PhotoImage(file='dependencies/Y.png')
-    else:
-#        mode_label.configure(text="Production (HSD)")
-        url = 'https://hsdes-api.intel.com/rest/article'
-        linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
-        auto_c = 'https://hsdes-api.intel.com/rest/query/autocomplete/support/services_sys_val/'
-        icon = PhotoImage(file='dependencies/B.png')
+#     if mode == "Pre-Prod":
+#         mode_label.configure(text="Pre-Production (HSD)")
+#         url = 'https://hsdes-api-pre.intel.com/rest/article'
+#         linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
+#         auto_c = 'https://hsdes-api-pre.intel.com/rest/query/autocomplete/support/services_sys_val/'
+#         icon = PhotoImage(file='dependencies/Y.png')
+#     else:
+#         mode_label.configure(text="Production (HSD)")
+#         url = 'https://hsdes-api.intel.com/rest/article'
+#         linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
+#         auto_c = 'https://hsdes-api.intel.com/rest/query/autocomplete/support/services_sys_val/'
+#         icon = PhotoImage(file='dependencies/B.png')
 
 def CheckBox_SelectAll_command():
     variables
@@ -316,15 +316,13 @@ def update_hsd_url():
     global auto_c
     print(f"update_hsd_url called with source: {source}")
     print("")
-    
+    mode_label.config(text=f"(HSD) {hsd_source.get()}uction")
     if source == "Pre-Prod":
-#        mode_label.configure(text="Pre-Production (HSD)")
         url = 'https://hsdes-api-pre.intel.com/rest/article'
         linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
         auto_c = 'https://hsdes-api-pre.intel.com/rest/query/autocomplete/support/services_sys_val/'
         icon = PhotoImage(file='dependencies/Y.png')
     if source == "Prod":
-#        mode_label.configure(text="Production (HSD)")
         url = 'https://hsdes-api.intel.com/rest/article'
         linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
         auto_c = 'https://hsdes-api.intel.com/rest/query/autocomplete/support/services_sys_val/'
@@ -397,6 +395,11 @@ hsd_source = tk.StringVar(value='Pre-Prod')
 hsd_menu.add_radiobutton(label='HSD-Prod', value='Prod', variable=hsd_source,command=update_hsd_url)
 hsd_menu.add_radiobutton(label='HSD-Pre', value='Pre-Prod', variable=hsd_source,command=update_hsd_url)
 
+# Create a label to display the current mode
+mode_label = tk.Label(root, text=f"{hsd_source.get()}uction", font=("Times", 16), fg="blue")
+mode_label.place(relx=0.5, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
+
+
 prog_menu = tk.Menu(menu, tearoff=False)
 menu.add_cascade(label='Program Sources', menu=prog_menu)
 # Use a single StringVar to hold the value of the selected radio button
@@ -419,56 +422,59 @@ site_menu = tk.Menu(menu, tearoff=False)
 root.configure(menu = menu)
 
 
-# Create Toggle function
-def clicker():
-    mode_switch.toggle()
-    if switch_var.get() == "Pre-Prod":
-        mode_label.configure(text="Pre-Production (HSD)")
-    else:
-        mode_label.configure(text="Production (HSD)")
+# # Create Toggle function
+# def clicker():
+#     mode_switch.toggle()
+#     if switch_var.get() == "Pre-Prod":
+#         mode_label.configure(text="Pre-Production (HSD)")
+#     else:
+#         mode_label.configure(text="Production (HSD)")
 
-# Create a StringVar
-switch_var = customtkinter.StringVar(value="Pre-Prod")
+# # Create a StringVar
+# switch_var = customtkinter.StringVar(value="Pre-Prod")
 
-# Create Switch
-mode_switch = customtkinter.CTkSwitch(root, text="", command=get_hsd_url,
-                                    variable=switch_var, onvalue="Pre-Prod", offvalue="Prod",
-                                    switch_width=20,
-                                    switch_height=10,
-                                    font=("Times", 24),
-                                    text_color="blue",
-                                    state="normal",
-                                    )
-mode_var = {'widget': mode_switch, 'variable': switch_var}
+# # Create Switch
+# mode_switch = customtkinter.CTkSwitch(root, text="", command=get_hsd_url,
+#                                     variable=switch_var, onvalue="Pre-Prod", offvalue="Prod",
+#                                     switch_width=20,
+#                                     switch_height=10,
+#                                     font=("Times", 24),
+#                                     text_color="blue",
+#                                     state="normal",
+#                                     )
+# mode_var = {'widget': mode_switch, 'variable': switch_var}
 
-# Create Toggle function
-def clicker_menu_src():
-    src_switch.toggle()
+# # Create Toggle function
+# def clicker_menu_src():
+#     src_switch.toggle()
 
-# Option Menu Source Switch
-switch_src = customtkinter.StringVar(value="CSV")
+# # Option Menu Source Switch
+# switch_src = customtkinter.StringVar(value="CSV")
 
-# Create Switch
-src_switch = customtkinter.CTkSwitch(root, text="",
-                                    variable=switch_src, onvalue="HSD", offvalue="CSV",
-                                    switch_width=20,
-                                    switch_height=10,
-                                    font=("Times", 24),
-                                    text_color="blue",
-                                    state="normal",
-                                    )
-src_var = {'widget': src_switch, 'variable': switch_src}
-# Create Label
-mode_label = customtkinter.CTkLabel(root, text="Pre-Production", font=("Times", 24), text_color="blue")
-#    src_label =
+# # Create Switch
+# src_switch = customtkinter.CTkSwitch(root, text="",
+#                                     variable=switch_src, onvalue="HSD", offvalue="CSV",
+#                                     switch_width=20,
+#                                     switch_height=10,
+#                                     font=("Times", 24),
+#                                     text_color="blue",
+#                                     state="normal",
+#                                     )
+# src_var = {'widget': src_switch, 'variable': switch_src}
+# # Create Label
+
+# #    src_label =
+
+
+
 # Place the label and switch
-mode_label.place(relx=0.5, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
-mode_switch.place(relx=0.8, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
-src_switch.place(relx=.8, rely=0.2, anchor=CENTER)  # Adjust x and y as needed       
+
+# mode_switch.place(relx=0.8, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
+# src_switch.place(relx=.8, rely=0.2, anchor=CENTER)  # Adjust x and y as needed       
 
 #ProgressSuccess Label
 Label_ProgressSuccess=tk.Label(root)
-ft = tkFont.Font(family='Times',size=18)
+ft = tkFont.Font(family='Times',size=14)
 Label_ProgressSuccess["font"] = ft
 Label_ProgressSuccess["fg"] = "#333333"
 Label_ProgressSuccess["justify"] = "left"
@@ -646,7 +652,7 @@ def postnewHSD(fields):
 
 ### Required because Pre and Prod HSD dont have the same fields. Need to submit Ticket to 
 ### Have them synced then wont need to pass different sets of variables.
-    if switch_var.get() == 'Pre-Prod':
+    if hsd_source.get() == 'Pre-Prod':
         lab = fields['lab']
         print('Pre-Production Mode')
         payload = {
