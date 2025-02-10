@@ -630,6 +630,7 @@ def postnewHSD(fields):
     org_unit = fields["org_unit"]
     customer_contact = fields["customer_contact"]
     program = fields["program"]
+    milestone_eta = fields["milestone_eta"]
     required_by_milestone = fields["required_by_milestone"]
     survey_comment = fields["survey_comment"]
     send_mail = "false"
@@ -637,130 +638,130 @@ def postnewHSD(fields):
 
 ### Required because Pre and Prod HSD dont have the same fields. Need to submit Ticket to 
 ### Have them synced then wont need to pass different sets of variables.
-    if hsd_source.get() == 'Pre-Prod':
-        lab = fields['lab']
-        print('Pre-Production Mode')
-        payload = {
-            "subject": subject,
-            "tenant": tenant,
-            "fieldValues": [
-                {
-                "title": title
-                },
-                {
-                "description": description
-                },
-                {
-                "services_sys_val.support.service_type": service_type
-                },
-                {
-                "services_sys_val.support.service_sub_type": service_sub_type
-                },
-                {
-                "services_sys_val.support.lab_org": lab_org
-                },
-                {
-                "services_sys_val.support.category": category
-                },
-                {
-                "component": component
-                },
-                {
-                "priority": priority
-                },
-                {
-                "support.customer_contact": customer_contact
-                },
-                {
-                "support.site": site
-                },
-                {
-                "services_sys_val.support.lab": lab
-                },
-                {
-                "notify": notify
-                },
-                {
-                "services_sys_val.support.org_unit": org_unit
-                },
-                {
-                "services_sys_val.support.program": program
-                },
-                {
-                "send_mail": send_mail
-                },
-                {
-                "services_sys_val.support.required_by_milestone": required_by_milestone
-                },
-                {
-                "services_sys_val.support.survey_comment": survey_comment
-                }
-            ]
+    # if hsd_source.get() == 'Pre-Prod':
+    #     lab = fields['lab']
+    #     print('Pre-Production Mode')
+    #     payload = {
+    #         "subject": subject,
+    #         "tenant": tenant,
+    #         "fieldValues": [
+    #             {
+    #             "title": title
+    #             },
+    #             {
+    #             "description": description
+    #             },
+    #             {
+    #             "services_sys_val.support.service_type": service_type
+    #             },
+    #             {
+    #             "services_sys_val.support.service_sub_type": service_sub_type
+    #             },
+    #             {
+    #             "services_sys_val.support.lab_org": lab_org
+    #             },
+    #             {
+    #             "services_sys_val.support.category": category
+    #             },
+    #             {
+    #             "component": component
+    #             },
+    #             {
+    #             "priority": priority
+    #             },
+    #             {
+    #             "support.customer_contact": customer_contact
+    #             },
+    #             {
+    #             "support.site": site
+    #             },
+    #             {
+    #             "services_sys_val.support.lab": lab
+    #             },
+    #             {
+    #             "notify": notify
+    #             },
+    #             {
+    #             "services_sys_val.support.org_unit": org_unit
+    #             },
+    #             {
+    #             "services_sys_val.support.program": program
+    #             },
+    #             {
+    #             "send_mail": send_mail
+    #             },
+    #             {
+    #             "services_sys_val.support.required_by_milestone": required_by_milestone
+    #             },
+    #             {
+    #             "services_sys_val.support.survey_comment": survey_comment
+    #             }
+    #         ]
+    #         }
+    # else:
+    #milestone_eta = fields["milestone_eta"]
+    print('Production Mode')
+    lab = fields['lab']
+    payload = {
+        "subject": subject,
+        "tenant": tenant,
+        "fieldValues": [
+            {
+            "title": title
+            },
+            {
+            "description": description
+            },
+            {
+            "services_sys_val.support.service_type": service_type
+            },
+            {
+            "services_sys_val.support.service_sub_type": service_sub_type
+            },
+            {
+            "services_sys_val.support.lab_org": lab_org
+            },
+            {
+            "services_sys_val.support.category": category
+            },
+            {
+            "component": component
+            },
+            {
+            "priority": priority
+            },
+            {
+            "support.customer_contact": customer_contact
+            },
+            {
+            "support.site": site
+            },
+            {
+            "services_sys_val.support.lab": lab
+            },
+            {
+            "notify": notify
+            },
+            {
+            "services_sys_val.support.org_unit": org_unit
+            },
+            {
+            "services_sys_val.support.program": program
+            },
+            {
+            "services_sys_val.support.milestone_eta": milestone_eta
+            },
+            {
+            "send_mail": send_mail
+            },
+            {
+            "services_sys_val.support.required_by_milestone": required_by_milestone
+            },
+            {
+            "services_sys_val.support.survey_comment": survey_comment
             }
-    else:
-        milestone_eta = fields["milestone_eta"]
-        print('Production Mode')
-        lab = fields['lab']
-        payload = {
-            "subject": subject,
-            "tenant": tenant,
-            "fieldValues": [
-                {
-                "title": title
-                },
-                {
-                "description": description
-                },
-                {
-                "services_sys_val.support.service_type": service_type
-                },
-                {
-                "services_sys_val.support.service_sub_type": service_sub_type
-                },
-                {
-                "services_sys_val.support.lab_org": lab_org
-                },
-                {
-                "services_sys_val.support.category": category
-                },
-                {
-                "component": component
-                },
-                {
-                "priority": priority
-                },
-                {
-                "support.customer_contact": customer_contact
-                },
-                {
-                "support.site": site
-                },
-                {
-                "services_sys_val.support.lab": lab
-                },
-                {
-                "notify": notify
-                },
-                {
-                "services_sys_val.support.org_unit": org_unit
-                },
-                {
-                "services_sys_val.support.program": program
-                },
-                {
-                "services_sys_val.support.milestone_eta": milestone_eta
-                },
-                {
-                "send_mail": send_mail
-                },
-                {
-                "services_sys_val.support.required_by_milestone": required_by_milestone
-                },
-                {
-                "services_sys_val.support.survey_comment": survey_comment
-                }
-            ]
-            }
+        ]
+        }
     
     readyMessage=''
     total_tickets=0
@@ -795,11 +796,11 @@ def postnewHSD(fields):
 
         response = requests.post(url, verify=False,auth=HTTPKerberosAuth(), headers = headers, data = data)
         return response.json()
-        return {'new_id':2}
+#        return {'new_id':2}
 
 #--------------------------------------------------------------------------------------------------------------------
-#Start Here------------------------------------------------------
-def build_ticket_detials():
+#### Start Here------------------------------------------------------
+def build_ticket_details():
     global url
     global linkUrl
     global icon
@@ -1060,7 +1061,7 @@ Button_Create=ttk.Button(root)
 Button_Create["text"] = "Create"
 Button_Create["tooltip"] = "Create selected milestone tickets and copies links to them in the clipboard cache."
 Button_Create.place(x=320,y=630,width=158,height=30)
-Button_Create["command"] = build_ticket_detials
+Button_Create["command"] = build_ticket_details
 
 Button_info=ttk.Button(root)
 Button_info["text"] = "info"
