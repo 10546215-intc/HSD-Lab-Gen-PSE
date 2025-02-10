@@ -35,11 +35,11 @@ variables = {}
 mode_var = {}
 src_var = {}
 #dynamic_vals = {}
-project_options = ()
+program_options = ()
 site_options = ()
 dynamic_CSV_file = 'NEW'
 ###site_configs could be list
-sites_options=['']
+sites_options=[]
 notify_dict={}
 customer_options={}
 backup_options={}
@@ -127,7 +127,7 @@ def get_checkboxes():
                 checkbox["fg"] = "#333333"
                 checkbox["justify"] = "left"
                 checkbox["text"] = milestones[key]["cb_title"]
-                checkbox.place(x=10, y=196 + cb_num * 30, width=490, height=25)  # Adjust y position for each checkbox
+                checkbox.place(x=10, y=160 + cb_num * 30, width=490, height=25)  # Adjust y position for each checkbox
                 checkbox["offvalue"] = "0"
                 checkbox["onvalue"] = "1"
                 checkbox["variable"] = var
@@ -144,10 +144,12 @@ def get_checkboxes():
     except:
         print("fail")
 
-#def get_opt_menu_list(field, name, data_src):
-def get_opt_menu_list(field, name):    
-    source = prog_source.get()   
-    global project_options
+def get_opt_menu_list(field, name):
+    if name == 'program':
+        source = prog_source.get()
+    if name == 'Site':    
+        source = ste_source.get()   
+    global program_options
     global site_options
     global static_vals
     tmp_dict=[]
@@ -159,6 +161,14 @@ def get_opt_menu_list(field, name):
     global lead_dict
     global url, linkUrl, icon, auto_c
     global auto_c
+    
+    
+    sites_options.clear()
+    customer_options.clear()
+    backup_options.clear()
+    notify_dict.clear()
+    lab_dict.clear()
+    lead_dict.clear()
     
     src_file = f"dependencies/{name}.csv"
     update_hsd_url()
@@ -194,7 +204,6 @@ def get_opt_menu_list(field, name):
 ### Load from CSV file    
     if source == 'CSV':     
         try:
-        #with open(r"dependencies/config.csv", encoding="utf8") as f:
             with open(src_file, encoding="utf8") as f:    
                 csv_config = csv.DictReader(f)
                 print('\nloading config and verifing options')
@@ -215,19 +224,35 @@ def get_opt_menu_list(field, name):
                         FileOpenMessage="Can not find file(s):\n"
                         FileOpenMessage = FileOpenMessage + f'\ndependencies/{name}.csv'
             v_list = tmp_dict
+            v_list.sort()
+            config_open=True
             
-            if name == 'program':
-                project_options = v_list
-                project_options.sort()            
-                project_options.insert(0,"")
-            elif name == 'Site':
+            # Function to update the options in the OptionMenu
+            if name == "program":
+                program_options = v_list
+                menu = program_menu['menu']
+                menu.delete(0, 'end')
+                options_name = program_options
+                opt_selected = project_option_selected
+            elif name == "Site":
                 site_options = v_list
-                site_options.sort()
-                site_options.insert(0,"")
+                menu = site_menu['menu']
+                menu.delete(0, 'end')
+                options_name = site_options
+                opt_selected = site_option_selected
+            else:
+                print(f"Menu not identified")
+                
+            for option in v_list:
+                menu.add_command(label=option, command=tk._setit(opt_selected, option))
+            #Optionally, set the default value to the first item in the new options
+            if options_name:
+                opt_selected.set('')
+#                opt_selected.set(options_name[0])
             else:
                 print("Options list unassigned") 
+
             
-            config_open=True
         except:
             config_open=False
 
@@ -235,35 +260,60 @@ def get_opt_menu_list(field, name):
     if source == 'HSD':
         try:
             v_list = [(item.get('' + field_type + '', None)) for item in data if item.get('' + field_type + '', None)]   
-            #with open(r"dependencies/config.csv", encoding="utf8") as f:
-            with open(src_file, encoding="utf8") as f:    
-                csv_config = csv.DictReader(f)
-                print('\nloading config and verifing options')
-                for line in csv_config:                
-                    sites_options.append(line['Site'])
-                    customer_options.update({line['Site']: line['Customer']})
-                    backup_options.update({line['Site']: line['Backup']})
-                    notify_dict.update({line['Site']: line['Notify']})
-                    lab_dict.update({line['Site']: line['Lab']})
-                    lead_dict.update({line['Site']: line['Customer']})
-                    
-                if name == 'program':
-                    project_options = v_list
-                    project_options.sort()            
-                    project_options.insert(0,"")
-                elif name == 'site':
-                    site_options = v_list
-                    site_options.sort()
-                    site_options.insert(0,"")
-                else:
-                    print("Options list unassigned")          
-            config_open=True
+
+
+            if name == 'Site': 
+                with open(src_file, encoding="utf8") as f:    
+                    csv_config = csv.DictReader(f)
+                    print('\nloading config and verifing options')
+                    for line in csv_config:
+                        #Checks if there is a value in the first line and if it exist in HSD
+                        #print(f" Checking for {line[name]} ")
+                        if(line[name]) and line.get(name).lower() in data_lower:
+                            tmp_dict.append(line[name])
+                            if name == 'Site':                     
+                                sites_options.append(line['Site'])
+                                customer_options.update({line['Site']: line['Customer']})
+                                backup_options.update({line['Site']: line['Backup']})
+                                notify_dict.update({line['Site']: line['Notify']})
+                                lab_dict.update({line['Site']: line['Lab']})
+                                lead_dict.update({line['Site']: line['Customer']})
+                        else:
+                            print(f" {line[name]} - Not Found In HSD, Check Name and update program.csv" )
+                            FileOpenMessage="Can not find file(s):\n"
+                            FileOpenMessage = FileOpenMessage + f'\ndependencies/{name}.csv'
+
+            # Function to update the options in the OptionMenu
+            if name == "program":
+                program_options = v_list
+                menu = program_menu['menu']
+                menu.delete(0, 'end')
+                options_name = program_options
+                opt_selected = project_option_selected
+            elif name == "Site":
+                site_options = v_list
+                menu = site_menu['menu']
+                menu.delete(0, 'end')
+                options_name = site_options
+                opt_selected = site_option_selected
+            else:
+                print(f"Menu not identified")
+                
+            for option in v_list:
+                menu.add_command(label=option, command=tk._setit(opt_selected, option))
+            #Optionally, set the default value to the first item in the new options
+            if options_name:
+                opt_selected.set('')
+            else:
+                print("Options list unassigned") 
         except:
             config_open=False
             FileOpenMessage="Can not find file(s):\n"
             FileOpenMessage = FileOpenMessage + f'\ndependencies/{name}.csv'
-    print('config_open= '+ str(config_open))
-### Load Static_vals happens each time menu list are updated
+#    print('config_open= '+ str(config_open))
+
+def load_static_vals():
+   ### Load Static_vals happens each time menu list are updated
     try:
         with open("dependencies/static_vals.csv", encoding="utf8") as f:
             print('\nloading static_vals')
@@ -277,27 +327,8 @@ def get_opt_menu_list(field, name):
         static_vals_open=False
         FileOpenMessage="Can not find file(s):\n"
         FileOpenMessage = FileOpenMessage + '\ndependencies/static_vals.csv'
-    print('static_vals_open = ' + str(static_vals_open))
-        
-# def get_hsd_url(mode):
-#     global url
-#     global linkUrl
-#     global icon
-#     global milestones
-#     global auto_c
-    
-#     if mode == "Pre-Prod":
-#         mode_label.configure(text="Pre-Production (HSD)")
-#         url = 'https://hsdes-api-pre.intel.com/rest/article'
-#         linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
-#         auto_c = 'https://hsdes-api-pre.intel.com/rest/query/autocomplete/support/services_sys_val/'
-#         icon = PhotoImage(file='dependencies/Y.png')
-#     else:
-#         mode_label.configure(text="Production (HSD)")
-#         url = 'https://hsdes-api.intel.com/rest/article'
-#         linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
-#         auto_c = 'https://hsdes-api.intel.com/rest/query/autocomplete/support/services_sys_val/'
-#         icon = PhotoImage(file='dependencies/B.png')
+    print('static_vals_open = ' + str(static_vals_open)) 
+
 
 def CheckBox_SelectAll_command():
     variables
@@ -307,8 +338,6 @@ def CheckBox_SelectAll_command():
     else:
             for checkbox in variables.values():
                 checkbox['widget'].deselect()
-
-
 
 def update_hsd_url(): 
     source = hsd_source.get()
@@ -387,6 +416,19 @@ cv.create_line(line2_x, rect_y1, line2_x, rect_y2)
 #Add Menu for Options
 menu = tk.Menu(root)
 
+
+
+project_option_selected = tk.StringVar(root)
+program_menu=ttk.OptionMenu(root,project_option_selected,*program_options)
+program_menu['tooltip'] = 'Choose program / project.'
+program_menu.place(x=10,y=69,width=150,height=25)
+
+site_option_selected = tk.StringVar(root)
+site_menu=ttk.OptionMenu(root,site_option_selected,*site_options)
+site_menu['tooltip'] = 'Choose Site.'
+site_menu.place(x=168,y=69,width=150,height=25)
+
+
 hsd_menu = tk.Menu(menu, tearoff=False)
 menu.add_cascade(label='HSD Sources', menu=hsd_menu)
 # Use a single StringVar to hold the value of the selected radio button
@@ -397,80 +439,47 @@ hsd_menu.add_radiobutton(label='HSD-Pre', value='Pre-Prod', variable=hsd_source,
 
 # Create a label to display the current mode
 mode_label = tk.Label(root, text=f"{hsd_source.get()}uction", font=("Times", 16), fg="blue")
-mode_label.place(relx=0.5, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
-
+mode_label.place(x=150, y=4)
 
 prog_menu = tk.Menu(menu, tearoff=False)
 menu.add_cascade(label='Program Sources', menu=prog_menu)
 # Use a single StringVar to hold the value of the selected radio button
 prog_source = tk.StringVar(value = 'CSV')
 # Add radio buttons to the menu
-prog_menu.add_radiobutton(label='HSD', value='HSD', variable=prog_source)
-prog_menu.add_radiobutton(label='CSV', value='CSV', variable=prog_source)
+prog_menu.add_radiobutton(label='HSD', value='HSD', variable=prog_source, command=lambda: get_opt_menu_list('services_sys_val.support.program','program'))
+prog_menu.add_radiobutton(label='CSV', value='CSV', variable=prog_source, command=lambda: get_opt_menu_list('services_sys_val.support.program','program'))
 
 print(prog_source.get)
 
-site_menu = tk.Menu(menu, tearoff=False)
-menu.add_cascade(label='Site Sources', menu=site_menu)
+ste_menu = tk.Menu(menu, tearoff=False)
+menu.add_cascade(label='Site Sources', menu=ste_menu)
 # Use a single StringVar to hold the value of the selected radio button
-site_source = tk.StringVar(value = 'CSV')
+ste_source = tk.StringVar(value = 'CSV')
 # Add radio buttons to the menu
-site_menu.add_radiobutton(label='HSD', value='HSD', variable=site_source)
-site_menu.add_radiobutton(label='CSV', value='CSV', variable=site_source)
-site_menu = tk.Menu(menu, tearoff=False)
+ste_menu.add_radiobutton(label='HSD', value='HSD', variable=ste_source, command=lambda: get_opt_menu_list('support.site','Site'))
+ste_menu.add_radiobutton(label='CSV', value='CSV', variable=ste_source, command=lambda: get_opt_menu_list('support.site','Site'))
+ste_menu = tk.Menu(menu, tearoff=False)
 
 root.configure(menu = menu)
 
 
-# # Create Toggle function
-# def clicker():
-#     mode_switch.toggle()
-#     if switch_var.get() == "Pre-Prod":
-#         mode_label.configure(text="Pre-Production (HSD)")
-#     else:
-#         mode_label.configure(text="Production (HSD)")
-
-# # Create a StringVar
-# switch_var = customtkinter.StringVar(value="Pre-Prod")
-
-# # Create Switch
-# mode_switch = customtkinter.CTkSwitch(root, text="", command=get_hsd_url,
-#                                     variable=switch_var, onvalue="Pre-Prod", offvalue="Prod",
-#                                     switch_width=20,
-#                                     switch_height=10,
-#                                     font=("Times", 24),
-#                                     text_color="blue",
-#                                     state="normal",
-#                                     )
-# mode_var = {'widget': mode_switch, 'variable': switch_var}
-
-# # Create Toggle function
-# def clicker_menu_src():
-#     src_switch.toggle()
-
-# # Option Menu Source Switch
-# switch_src = customtkinter.StringVar(value="CSV")
-
-# # Create Switch
-# src_switch = customtkinter.CTkSwitch(root, text="",
-#                                     variable=switch_src, onvalue="HSD", offvalue="CSV",
-#                                     switch_width=20,
-#                                     switch_height=10,
-#                                     font=("Times", 24),
-#                                     text_color="blue",
-#                                     state="normal",
-#                                     )
-# src_var = {'widget': src_switch, 'variable': switch_src}
-# # Create Label
-
-# #    src_label =
+def advance_window(tog=[0]):
+    tog[0] = not tog[0]
+    if tog[0]:
+        print("Advance Window Open")
+        root.geometry("984x680")
+        Button_advance["text"] = "<-"
+    else:
+        print("Advance Window Close")
+        root.geometry("492x680")
+        Button_advance["text"] = "->"
 
 
-
-# Place the label and switch
-
-# mode_switch.place(relx=0.8, rely=0.02, anchor=CENTER)  # Adjust x and y as needed
-# src_switch.place(relx=.8, rely=0.2, anchor=CENTER)  # Adjust x and y as needed       
+Button_advance=ttk.Button(root)
+Button_advance["text"] = "->"
+Button_advance["tooltip"] = "Advance options."
+Button_advance.place(x=417,y=4,width=65,height=30)
+Button_advance["command"] = advance_window   
 
 #ProgressSuccess Label
 Label_ProgressSuccess=tk.Label(root)
@@ -482,24 +491,14 @@ Label_ProgressSuccess["text"] = ""
 Label_ProgressSuccess.place(x=0,y=340,width=492,height=20)
 
 
-
-##### get_hsd_url(switch_var.get())
-#get_opt_menu_list('services_sys_val.support.program','program',switch_src.get()) 
-#get_opt_menu_list('support.site','Site', switch_src.get()) 
-
 get_opt_menu_list('services_sys_val.support.program','program') 
 get_opt_menu_list('support.site','Site') 
 get_milestones()
+load_static_vals()
 #UpdateIcon()
 
-#### Update to populate pulldowns from query, to be removed after 
-#Validate field aginist HSD-ES DB
-# Create variables for the project and site option selected, etc.
-project_option_selected = tk.StringVar(root)
-site_option_selected = tk.StringVar(root)
 customer_option_selected = tk.StringVar(root)
 notify_option_selected = tk.StringVar(root)
-
 
 MS_options=['']
 #        l_MS_options=['']
@@ -510,8 +509,6 @@ def close():
     root.destroy()
 
 clipboard = static_vals['createClipboard']
-
-### Sets production http can be removed.
 
 #Create List for WorkWeek OptionMenu
 i = 1
@@ -534,18 +531,6 @@ YearList = []
 for i in range(2021,2051):
     YearList.insert(i,i)
     i += 1
-
-# Create Pulldown OptionMenu boxes with tooltips
-# load full project list
-
-
-project_menu=ttk.OptionMenu(root,project_option_selected,*project_options)
-project_menu['tooltip'] = 'Choose program / project.'
-project_menu.place(x=10,y=69,width=150,height=25)
-
-site_menu=ttk.OptionMenu(root,site_option_selected,*site_options)
-site_menu['tooltip'] = 'Choose Site.'
-site_menu.place(x=168,y=69,width=150,height=25)
 
 Option_101=ttk.OptionMenu(root,WorkWeekValue_Inside,*WorkWeekList)
 Option_101['tooltip'] = 'Choose todays known work week for power on.'
@@ -587,7 +572,7 @@ CheckBox_SelectAll["font"] = ft
 CheckBox_SelectAll["fg"] = "#333333"
 CheckBox_SelectAll["justify"] = "left"
 CheckBox_SelectAll["text"] = "Select All"
-CheckBox_SelectAll.place(x=10,y=156,width=110,height=25)
+CheckBox_SelectAll.place(x=10,y=160,width=110,height=25)
 CheckBox_SelectAll["offvalue"] = "0"
 CheckBox_SelectAll["onvalue"] = "1"
 CheckBox_SelectAll["command"] = CheckBox_SelectAll_command
@@ -602,11 +587,11 @@ get_checkboxes()
 #Milestones Label
 Label_MS=tk.Label(root)
 Label_MS["anchor"] = "w"
-ft = tkFont.Font(family='Times',size=14)
+ft = tkFont.Font(family='Times',size=14, weight="bold")
 Label_MS["font"] = ft
 Label_MS["fg"] = "#333333"
 Label_MS["justify"] = "left"
-Label_MS["text"] = "Milestones"
+Label_MS["text"] = "Milestones:"
 Label_MS["relief"] = "flat"
 Label_MS.place(x=10,y=131,width=186,height=30)
 
