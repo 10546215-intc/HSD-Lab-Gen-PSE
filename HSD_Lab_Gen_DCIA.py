@@ -35,7 +35,7 @@ checkboxes = {}
 variables = {}
 mode_var = {}
 src_var = {}
-dynamic_vals = {}
+#dynamic_vals = {}
 project_options = ()
 site_options = ()
 dynamic_CSV_file = 'NEW'
@@ -53,6 +53,7 @@ checkbox_dict={}
 staticver = ""
 static_vals_open = "" #static version number
 linkCollection = ""
+hsd_source = ""
 
 #url_Prod = "https://hsdes-api.intel.com/"
 #url_Pre = "https://hsdes-api-pre.intel.com/"
@@ -149,6 +150,11 @@ def get_opt_menu_list(field, name, data_src):
     global static_vals
     tmp_dict=[]
     data_lower=[]
+    global customer_options
+    global backup_options
+    global notify_dict
+    global lab_dict
+    global lead_dict
     
     src_file = f"dependencies/{name}.csv"   
     try:
@@ -267,39 +273,6 @@ def get_opt_menu_list(field, name, data_src):
         FileOpenMessage="Can not find file(s):\n"
         FileOpenMessage = FileOpenMessage + '\ndependencies/static_vals.csv'
     print('static_vals_open = ' + str(static_vals_open))
-
-# def load_site_config():
-#     global config_open
-#     if pull_down_mode == "dynamic":
-#         ### This needed to be added to build version and site info dictionaries from above.
-#     #            site_list = get_opt_menu_list('support.site','project')
-#         site_options_lower = [site.lower() for site in site_options] # Convert site_options sites to lowercase for compare
-#         try:
-#             with open(r"dependencies/config.csv", encoding="utf8") as f:
-#                 csv_config = csv.DictReader(f)
-#                 print('\nloading config and verifing options')
-#                 for line in csv_config:
-#                     if(line['Version']):
-#                         configver = line['Version']
-
-#                     if(line['Site']):        
-#                         if line['Site'].lower()  in site_options_lower:
-#                             sites_options.append(line['Site'].lower())
-#                             lab_dict.update({line['Site'].lower(): line['Lab']})
-#                             notify_dict.update({line['Site'].lower(): line['Notify']})
-#                             lead_dict.update({line['Site'].lower(): line['Customer']})
-
-# ## this may have been for future in order to add multiple customer contacts will need to investigate
-#                         if(line['Customer']):
-#                             customer_options.update({line['Site']: line['Customer']})
-
-#                         if(line['Notify']):
-#                             notify_options.update({line['Site']: line['Notify']})
-#             config_open=True
-#         except:
-#             config_open=False
-
-#         print('config_open = '+ str(config_open))
         
 def get_hsd_url(mode):
     global url
@@ -313,30 +286,17 @@ def get_hsd_url(mode):
         url = 'https://hsdes-api-pre.intel.com/rest/article'
         linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
         auto_c = 'https://hsdes-api-pre.intel.com/rest/query/autocomplete/support/services_sys_val/'
-        icon = 'dependencies/Y.png'
+        icon = PhotoImage(file='dependencies/Y.png')
     else:
 #        mode_label.configure(text="Production (HSD)")
         url = 'https://hsdes-api.intel.com/rest/article'
         linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
         auto_c = 'https://hsdes-api.intel.com/rest/query/autocomplete/support/services_sys_val/'
-        icon = 'dependencies/B.png'
-    UpdateIcon()
-    
-def UpdateIcon():
-    global icon
-    try:
-        p1 = PhotoImage(file=icon)
-        root.iconphoto(False, p1)
-    except:
-        print('Could not find icon.')
+        icon = PhotoImage(file='dependencies/B.png')
 
-def reload_menus():
-    pass
-        # get_opt_menu_list('services_sys_val.support.program','program',mode_var['variable'].get()) 
-        # get_opt_menu_list('support.site','Site', mode_var['variable'].get()) 
 
 class App():
-    global dynamic_vals
+#    global dynamic_vals
     global dynamic_CSV_file
     global dynamic_vals_open
     global static_vals_open
@@ -350,8 +310,11 @@ class App():
     global customer_options
     global notify_options
     global config_open
-    
+    global icon
+    global hsd_source
+
     def __init__(self, root):
+        self.root = root
         root.title("HSD-Lab Gen - Version " + str(vernum))
         root.eval("tk::PlaceWindow . center")
         #setting window size
@@ -365,23 +328,88 @@ class App():
         root.resizable(width=False, height=False)
  
         # #Load Icon
-        # def UpdateIcon():
-        #     global icon
-        #     try:
-        #         p1 = PhotoImage(file=icon)
-        #         root.iconphoto(False, p1)
-        #     except:
-        #         print('Could not find icon.')
-        # #icon = 'dependencies/B.png' #Production Mode
-        # #UpdateIcon()
+    # def UpdateIcon():
+    #     global icon
+    #     try:
+    #         root.iconphoto(False, icon)
+    #     except:
+    #         print('Could not find icon.')
  
+    #     UpdateIcon()
+    
         #Set Size for GUI
+        
+
+    
         cv = Canvas(root,width=892,height=740)
         cv.pack()
         cv.create_rectangle(2,38,485,126,fill=menu_color)
         cv.create_line(165,38,165,126)
         cv.create_line(326,38,326,126)
 
+
+
+        def update_hsd_url(self):
+            source = self.hsd_source.get()
+            global url, linkUrl, icon, auto_c
+            global auto_c
+            
+            if source == "Pre-Prod":
+        #        mode_label.configure(text="Pre-Production (HSD)")
+                url = 'https://hsdes-api-pre.intel.com/rest/article'
+                linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
+                auto_c = 'https://hsdes-api-pre.intel.com/rest/query/autocomplete/support/services_sys_val/'
+                icon = PhotoImage(file='dependencies/Y.png')
+            if source == "Prod":
+        #        mode_label.configure(text="Production (HSD)")
+                url = 'https://hsdes-api.intel.com/rest/article'
+                linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
+                auto_c = 'https://hsdes-api.intel.com/rest/query/autocomplete/support/services_sys_val/'
+                icon = PhotoImage(file='dependencies/B.png')
+
+
+        #Add Menu for Options
+        menu = tk.Menu(root)
+
+        hsd_menu = tk.Menu(menu, tearoff=False)
+        menu.add_cascade(label='HSD Sources', menu=hsd_menu)
+        # Use a single StringVar to hold the value of the selected radio button
+        self.hsd_source = tk.StringVar(value='Pre-Prod')
+        # Add radio buttons to the menu
+        hsd_menu.add_radiobutton(label='HSD-Prod', value='Prod', variable=self.hsd_source,command=lambda: update_hsd_url(self))
+        hsd_menu.add_radiobutton(label='HSD-Pre', value='Pre-Prod', variable=self.hsd_source,command =lambda: update_hsd_url(self))
+        
+        prog_menu = tk.Menu(menu, tearoff=False)
+        menu.add_cascade(label='Program Sources', menu=prog_menu)
+        # Use a single StringVar to hold the value of the selected radio button
+        prog_source = tk.StringVar(value = 'CSV')
+        # Add radio buttons to the menu
+        prog_menu.add_radiobutton(label='HSD', value='HSD', variable=prog_source)
+        prog_menu.add_radiobutton(label='CSV', value='CSV', variable=prog_source)
+
+        site_menu = tk.Menu(menu, tearoff=False)
+        menu.add_cascade(label='Site Sources', menu=site_menu)
+        # Use a single StringVar to hold the value of the selected radio button
+        site_source = tk.StringVar(value = 'CSV')
+        # Add radio buttons to the menu
+        site_menu.add_radiobutton(label='HSD', value='HSD', variable=site_source)
+        site_menu.add_radiobutton(label='CSV', value='CSV', variable=site_source)
+        site_menu = tk.Menu(menu, tearoff=False)
+
+        root.configure(menu = menu)
+        
+
+
+
+
+
+
+
+
+
+
+
+        
         # Create Toggle function
         def clicker():
             mode_switch.toggle()
@@ -412,7 +440,7 @@ class App():
         switch_src = customtkinter.StringVar(value="CSV")
 
         # Create Switch
-        src_switch = customtkinter.CTkSwitch(root, text="", command=reload_menus(),
+        src_switch = customtkinter.CTkSwitch(root, text="",
                                             variable=switch_src, onvalue="HSD", offvalue="CSV",
                                             switch_width=20,
                                             switch_height=10,
@@ -446,6 +474,7 @@ class App():
         get_opt_menu_list('services_sys_val.support.program','program',switch_src.get()) 
         get_opt_menu_list('support.site','Site', switch_src.get()) 
         get_milestones()
+        #UpdateIcon()
         
 #### Update to populate pulldowns from query, to be removed after 
         #Validate field aginist HSD-ES DB
@@ -803,7 +832,6 @@ class App():
                     selected_notify = notify_dict[selected_site]
                     selected_lead = lead_dict[selected_site]
 
- 
                     print("Selected Program: {}".format(project_option_selected.get()))
                     print("Selected Site: " + selected_site)
                     print("Selected WW: {}".format(WorkWeekValue_Inside.get()))
@@ -813,12 +841,12 @@ class App():
                     print("Selected Lab: " + selected_lab)
 
 
-### Checkbox check for keystone check boxes, Comment out for production                    
+                    ### Checkbox check for keystone check boxes, Comment out for production                    
                     # for key, value in variables.items():
                     #     status = value['variable'].get()
                     #     text = value['text']
                     #     print("Status of checkbox ({} - {}): {}".format(key, text, status))
-### End Checkbox check
+                    ### End Checkbox check
                     
                     for key, value in variables.items():
                         checkbox_dict.update({value['mile'].split('.')[0]:int(value['variable'].get())})
@@ -826,7 +854,7 @@ class App():
                     #Create a List of Dicts to store the complete tictet information. One ticket per row
                     fieldlist=[]
 
-### Test check for tickets that will be created based on check boxes  Comment out for deployment
+                    ### Test check for tickets that will be created based on check boxes  Comment out for deployment
                     print("")
                     print("##########################")
                     print("## HSD Milestone Status ##")
@@ -838,7 +866,7 @@ class App():
                             print(f"  Enabled - {milestone.get('cb_title')} {milestone.get('title')}")
                         else:
                             print(f"  Disabled - {milestone.get('cb_title')} {milestone.get('title')}") 
-### end Test check
+                    ### end Test check
 
                     dictionaryloop=1
                     if dictionaryloop==1:
@@ -1035,13 +1063,13 @@ class App():
                 root.geometry("492x680")
                 Button_advance["text"] = "->"
  
-        MS_1_selected = tk.StringVar(root)
-        MS_2_selected = tk.StringVar(root)
-        MS_3_selected = tk.StringVar(root)
+        # MS_1_selected = tk.StringVar(root)
+        # MS_2_selected = tk.StringVar(root)
+        # MS_3_selected = tk.StringVar(root)
  
-        entry_1 = tk.Entry(root)
-        entry_2 = tk.Entry(root)
-        entry_3 = tk.Entry(root)
+        # entry_1 = tk.Entry(root)
+        # entry_2 = tk.Entry(root)
+        # entry_3 = tk.Entry(root)
  
         ProgressBar=ttk.Progressbar(root)
         ProgressBar.place(x=6,y=665,width=480,height=10)
@@ -1063,11 +1091,10 @@ class App():
         Button_advance["tooltip"] = "Advance options."
         Button_advance.place(x=417,y=162,width=65,height=30)
         Button_advance["command"] = advance_window
- 
-    def CheckBox_SelectAll_command(self):
 
+
+    def CheckBox_SelectAll_command(self):
         variables
-        
         if self.varSelectAll.get() == 1:
              for checkbox in variables.values():
                  checkbox['widget'].select()
@@ -1075,7 +1102,7 @@ class App():
              for checkbox in variables.values():
                  checkbox['widget'].deselect()
 
- 
+
 if __name__ == "__main__":
     root = tk.Tk()
     app = App(root)

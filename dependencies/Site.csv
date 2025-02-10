@@ -1,10 +1,6 @@
 Site,Customer,Backup,Notify,Lab,Dynamic,Version
-BDC,rajeshr1,vmanjuna,Readiness Lab BDC,ECO3-2A iVE Lab,NEW,1.3
-Folsom,jsutaria,ydowling,Readiness Lab FM,NA,,
+Austin,amunson,armandoj,Readiness Lab AN,AN4-1B AVC/SV LAB,NEW,2
+BDC,rkrish9,kb2,Readiness Lab BDC,ECO3-2A iVE Lab,,
 Guadalajara,vhperezh,gaangulo,Readiness Lab GDC,NA,,
-IDC,ychernis,orenshak,Readiness Lab IDC,NA,,
-Jerusalem,orenshak,ychernis,Readiness Lab IDC,NA,,
-Kulim,bteoh,pingping,Readiness Lab PG,KM6 iVE Lab,,
-Austin,armandoj,armandoj,armandoj,AN4-1B AVC/SV LAB,,
-Oregon,allanhaw,jcapella,jcooley,NA,,
-Penang,pingping,bteoh,Readiness Lab PG,PG16 iVE Lab,,
+Oregon,adwinter,nshade,Readiness Lab OR,JF4-4222 (Server Debug),,
+Santa Clara,chanko,cmontgom,Readiness Lab SC,NA,,
