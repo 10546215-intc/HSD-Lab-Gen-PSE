@@ -700,7 +700,7 @@ def postnewHSD(fields):
     #         }
     # else:
     #milestone_eta = fields["milestone_eta"]
-    print('Production Mode')
+    print(hsd_source.get())
     lab = fields['lab']
     payload = {
         "subject": subject,
@@ -771,10 +771,10 @@ def postnewHSD(fields):
         readyMessage = "No Customer chosen.\n"
         exitFunction=TRUE
 
-    if notify == '':
-        print('no notify')
-        readyMessage = readyMessage + "No Notify chosen.\n"
-        exitFunction=TRUE
+    # if notify == '':
+    #     print('no notify')
+    #     readyMessage = readyMessage + "No Notify chosen.\n"
+    #     exitFunction=TRUE
 
     if lab == '':
         print('no Lab')

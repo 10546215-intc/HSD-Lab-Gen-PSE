@@ -1,6 +1,6 @@
 Site,Customer,Backup,Notify,Lab,Dynamic,Version
-Austin,amunson,armandoj,armandoj,AN4-1B AVC/SV LAB,NEW,2
-BDC,rkrish9,kb2,rkrish9,ECO3-2A iVE Lab,,
-Guadalajara,vhperezh,gaangulo,Readiness Lab GDC,NA,,
-Oregon,adwinter,nshade,adwinter,JF4-4222 (Server Debug),,
-Santa Clara,chanko,cmontgom,chanko,NA,,
+Austin,amunson,,,NA,NEW,2
+BDC,rkrish9,,,EC03-2A iVE Lab,,
+Guadalajara,vhperezh,,Readiness Lab GDC,NA,,
+Oregon,adwinter,,,NA,,
+Santa Clara,chanko,,Readiness Lab SC,NA,,
