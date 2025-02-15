@@ -813,6 +813,7 @@ def build_ticket_details():
     not_ready1=''
     not_ready2=''
 
+
     if (len(project_option_selected.get()) == 0):
         not_ready1 = 'Select Program\n'
 
