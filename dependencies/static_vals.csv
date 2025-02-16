@@ -1,15 +1,14 @@
-Item,Value,Version
-lab_org,DCAI PSE Labs,1.03
-category,Readiness,
-component,lab.Readiness.Parent,
-priority,4-low,
-status,open,
-reason,new,
-org_unit,DCAI.PSE,
-service_type,lab,
-service_sub_type,request,
-survey_comment,HSD-Lab Gen-PSE,
-survey_comment_PO,HSD-Lab Gen,
-survey_comment_VV,VV_Readiness,
-createClipboard,TRUE,
-pre_production,TRUE,
+Item,Value
+lab_org,iVE
+category,Readiness
+component,lab.Readiness.Parent
+priority,4-low
+status,open
+reason,new
+org_unit,IVE.VLA
+service_type,lab
+service_sub_type,request
+survey_comment,HSD-Lab Gen-PSE
+survey_comment_PO,HSD-Lab Gen
+survey_comment_VV,VV_Readiness
+createClipboard,TRUE
