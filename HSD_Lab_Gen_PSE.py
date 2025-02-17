@@ -42,7 +42,7 @@ notify_options={}
 lab_dict={}
 lead_dict={}
 static_vals = {}
-config_open = ""
+#config_open = ""
 checkbox_dict={}
 static_vals_open = "" #static version number
 linkCollection = ""
@@ -51,7 +51,6 @@ hsd_source = ""
 #url_Prod = "https://hsdes-api.intel.com/"
 #url_Pre = "https://hsdes-api-pre.intel.com/"
 
- 
 vernum = "0.98" #application version number
 configver = "X" #config version number
 dynamicver = "X" #dynamic version number
@@ -62,8 +61,6 @@ menu_color = "#e4e5ee"
 option_color = "#D4D6E4"
  
 def get_milestones():
-    global milestones
-    global milestone_vals_open
     try:
         print('\nLoading milestone_vals:')
         with open("dependencies/milestone_vals.csv", encoding="utf8") as data_file:
@@ -88,10 +85,7 @@ def get_milestones():
 
 def mk_checkboxes():
     #########  Create milestone check boxes
-    global checkboxes
-    global variables
     print('')
-
     cb_num=1
     start_y = 196
     keystones = 0
@@ -103,7 +97,6 @@ def mk_checkboxes():
             # Increment the count
             keystones += 1
     try:
-
         # Loop to create checkboxes
         for key, item in milestones.items():
             # Check if the value of the "keystone" key is 1
@@ -149,8 +142,6 @@ def get_opt_menu_list(field, name):
     update_hsd_url()
     try:
         headers = {'Content-type': 'application/json'}
-#        Label_ProgressSuccess["text"] = "Validating Menu Options with HSD-ES DB"
-#        root.after(1, Label_ProgressSuccess.update())
         url_validate = f'{auto_c}/{field}'
         field_type = field
         response = requests.get(url_validate, verify=False, auth=HTTPKerberosAuth(), headers=headers)
@@ -200,7 +191,7 @@ def get_opt_menu_list(field, name):
                         #FileOpenMessage = FileOpenMessage + f'\ndependencies/{name}.csv'
             v_list = tmp_dict
             v_list.sort()
-            config_open=True
+            #config_open=True
             
             # Function to update the options in the OptionMenu
             if name == "program":
@@ -226,8 +217,8 @@ def get_opt_menu_list(field, name):
 #                opt_selected.set(options_name[0])
             else:
                 print("Options list unassigned") 
-        except:
-            config_open=False
+        except Exception as e:
+            print(e)
 
 ### Load from HSD query and CSV File        
     if source == 'HSD':
@@ -277,10 +268,8 @@ def get_opt_menu_list(field, name):
             else:
                 print("Options list unassigned") 
         except:
-            config_open=False
             FileOpenMessage="Can not find file(s):\n"
             FileOpenMessage = FileOpenMessage + f'\ndependencies/{name}.csv'
-#    print('config_open= '+ str(config_open))
 
 def load_static_vals():
    ### Load Static_vals happens each time menu list are updated
@@ -440,12 +429,10 @@ def postnewHSD(fields):
 #--------------------------------------------------------------------------------------------------------------------
 #### Start Here------------------------------------------------------
 def build_ticket_details():
-    global icon
-
+    #global icon
     not_ready=''
     not_ready1=''
     not_ready2=''
-
 
     if (len(project_option_selected.get()) == 0):
         not_ready1 = 'Select Program\n'
@@ -604,7 +591,6 @@ def build_ticket_details():
                         print("Creating - milestone ww = "+ str(milestoneww) + " " + milestone.get("title"))
 
             print("")
-
             #Count List lines
             total_tickets = 0
             ticketInterval = 0
@@ -915,11 +901,8 @@ CheckBox_send_email["onvalue"] = "true"
 CheckBox_send_email["variable"] = varSend_email
 CheckBox_send_email.select()
 
-
-
 # Create milestone check boxes
 mk_checkboxes()
-
 
 # Milestones Label
 Label_MS=tk.Label(root)
@@ -948,12 +931,6 @@ Button_Create["text"] = "Create"
 Button_Create["tooltip"] = "Create selected milestone tickets and copies links to them in the clipboard cache."
 Button_Create.place(x=320,y=630,width=158,height=30)
 Button_Create["command"] = build_ticket_details
-
-# Button_info=ttk.Button(root)
-# Button_info["text"] = "info"
-# Button_info["tooltip"] = "File version information."
-# Button_info.place(x=417,y=132,width=65,height=30)
-# Button_info["command"] = display_info
 
 # if __name__ == "__main__":
 
