@@ -1,8 +1,6 @@
+import sys
 import tkinter as tk
-from tkinter import ttk
-from tkinter import *
-import tkinter.messagebox
-import tkinter.font as tkFont
+from tkinter import ttk, filedialog, messagebox
 from ttkwidgets import tooltips
 import datetime
 from datetime import timedelta
@@ -12,926 +10,1233 @@ import requests
 from requests_kerberos import HTTPKerberosAuth
 import urllib3
 import os
-import logging
+import webbrowser
 
-
-# this is to ignore the ssl insecure warning as we are passing in 'verify=false'
+# Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.environ["no_proxy"] = "127.0.0.1,localhost,intel.com"
-#headers = { 'Content-type': 'application/json' }
 
-# Declare global variables
-url = ""
-linkUrl = ""
-auto_c = ""
-icon = ""
-milestone_vals_open = ""
-pull_down_mode = "dynamic" # "dynamic" for HSD based "static" for Config file
-milestones = {}
-checkboxes = {}
-variables = {}
-mode_var = {}
-src_var = {}
-program_options = ()
-site_options = ()
-sites_options=[]
-notify_dict={}
-customer_options={}
-backup_options={}
-notify_options={}
-lab_dict={}
-lead_dict={}
-static_vals = {}
-#config_open = ""
-checkbox_dict={}
-static_vals_open = "" #static version number
-linkCollection = ""
-hsd_source = ""
+class HSDLabGenApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("HSD-Lab Gen - Version 0.98")
+        self.root.geometry('494x740')
+        self.root.geometry('494x740+100+10')  # Adjust the x_offset and y_offset as needed
+        self.root.resizable(width=False, height=False)
 
-#url_Prod = "https://hsdes-api.intel.com/"
-#url_Pre = "https://hsdes-api-pre.intel.com/"
+        self.url = ""
+        self.linkUrl = ""
+        self.auto_c = ""
+        self.icon = ""
+        self.milestone_vals_open = ""
+        self.pull_down_mode = "dynamic"
+        self.milestones = {}
+        self.checkboxes = {}
+        self.variables = {}
+        self.mode_var = {}
+        self.src_var = {}
+        self.program_options = ()
+        self.site_options = ()
+        self.sites_options = []
+        self.notify_dict = {}
+        self.customer_options = {}
+        self.backup_options = {}
+        self.notify_options = {}
+        self.lab_dict = {}
+        self.lead_dict = {}
+        self.static_vals = {}
+        self.checkbox_dict = {}
+        self.static_vals_open = ""
+        self.linkCollection = ""
+        self.hsd_source = ""
+        self.vernum = "0.98"
+        self.configver = "X"
+        self.dynamicver = "X"
+        self.staticver = "X"
 
-vernum = "0.98" #application version number
-configver = "X" #config version number
-dynamicver = "X" #dynamic version number
-staticver = "X"
- 
-#menu_color = "#FF0000"
-menu_color = "#e4e5ee"
-option_color = "#D4D6E4"
- 
-def get_milestones():
-    try:
-        print('\nLoading milestone_vals:')
-        with open("dependencies/milestone_vals.csv", encoding="utf8") as data_file:
-            data = csv.reader(data_file)
-            dynamic_headers = next(data)[0:]                            
-            for row in data:
-                temp_dict = {}
-                keystone = row[0]
-                name = row[2]
-                values = []
-                for x in row[0:]:    
-                    values.append(x)
+        self.menu_color = "#e4e5ee"
+        self.option_color = "#D4D6E4"
 
-                for i in range(len(values)):
-                    if values[i]:
-                        temp_dict[dynamic_headers[i]] = values[i]
-                milestones[name] = temp_dict
-        milestone_vals_open=True
-    except:
-        print('Failed to load Minestones!')
-        milestone_vals_open=False
+        self.setup_ui()
 
-def mk_checkboxes():
-    #########  Create milestone check boxes
-    print('')
-    cb_num=1
-    start_y = 196
-    keystones = 0
+    def setup_ui(self):
+        # Create a frame to hold the canvas
+        frame = tk.Frame(self.root, width=492, height=740)
+        frame.pack(fill="both", expand=True)
 
-    # Loop through each dictionary in the milestone collection
-    for key, item in milestones.items():
-        # Check if the value of the "keystone" key is 1
-        if item.get("keystone") == "1":
-            # Increment the count
-            keystones += 1
-    try:
-        # Loop to create checkboxes
-        for key, item in milestones.items():
-            # Check if the value of the "keystone" key is 1
-            if item.get("keystone") == "1":
-                var = tk.IntVar(root)
-                checkbox = tk.Checkbutton(root)
-                checkbox["anchor"] = "w"
-                checkbox["font"] = tkFont.Font(family='Times', size=10)
-                checkbox["fg"] = "#333333"
-                checkbox["justify"] = "left"
-                checkbox["text"] = milestones[key]["cb_title"]
-                checkbox.place(x=10, y=160 + cb_num * 30, width=490, height=25)  # Adjust y position for each checkbox
-                checkbox["offvalue"] = "0"
-                checkbox["onvalue"] = "1"
-                checkbox["variable"] = var
-                checkbox.select()
-                variables[key] = {'widget': checkbox, 'variable': var, 'text': checkbox["text"], 'mile': milestones[key]["mile"] }
-                # Store the checkbox in the dictionary
-                checkboxes[cb_num] = checkbox
-                cb_num += 1
-    except:
-        print("Failed to create Milestone Checkboxes!")
+        # Create the canvas
+        cv = tk.Canvas(frame, width=492, height=740)
+        cv.pack(fill="both", expand=True)
 
-def get_opt_menu_list(field, name):
-    if name == 'program':
-        source = prog_source.get()
-    if name == 'Site':    
-        source = ste_source.get()   
+        # Rectangle dimensions
+        rect_height = 88
 
-    tmp_dict=[]
-    data_lower=[]
-    sites_options.clear()
-    customer_options.clear()
-    backup_options.clear()
-    notify_dict.clear()
-    lab_dict.clear()
-    lead_dict.clear()
-    
-    src_file = f"dependencies/{name}.csv"
-    print("")
-    print(f"Loading {name} menu selections:")
-    print("")
-    update_hsd_url()
-    try:
-        headers = {'Content-type': 'application/json'}
-        url_validate = f'{auto_c}/{field}'
-        field_type = field
-        response = requests.get(url_validate, verify=False, auth=HTTPKerberosAuth(), headers=headers)
-        
-        # Check if the response is successful
-        if response.status_code != 200:
-#           logger.error(f"Failed to fetch data: {response.status_code} - {response.text}")
-            return []
-        
-        data = response.json().get("data", [])
-        data_lower = [(item.get('' + field_type + '', None)) for item in data if item.get('' + field_type + '', None)]
+        # Calculate the top-left and bottom-right coordinates of the rectangle
+        rect_x1 = 2
+        rect_y1 = 38
+        rect_x2 = 492 - 2
+        rect_y2 = rect_y1 + rect_height
 
-        # Validate the structure of the data
-        if not isinstance(data, list):
-#           logger.error("Invalid data format received")
-            return []
+        cv.create_rectangle(rect_x1, rect_y1, rect_x2, rect_y2, fill=self.menu_color)
 
-    except requests.RequestException as e:
-#       logger.error(f"Request failed: {e}")
-        tkinter.messagebox.showwarning('Connection Error','Not connected to HSDE-ES DB.')
-        return []
-    except Exception as e:
-#       logger.error(f"An unexpected error occurred: {e}")
-        tkinter.messagebox.showwarning('Connection Error','Not connected to HSDE-ES DB.')
-        return []
-### Load from CSV file    
-    if source == 'CSV':     
+        # Adjust the lines to be within the rectangle
+        line1_x = rect_x1 + (492 / 3)
+        line2_x = rect_x1 + (2 * 492 / 3)
+        cv.create_line(line1_x, rect_y1, line1_x, rect_y2)
+        cv.create_line(line2_x, rect_y1, line2_x, rect_y2)
+
+        # Add Menu for Options
+        menu = tk.Menu(self.root)
+
+        self.project_option_selected = tk.StringVar(self.root)
+        self.program_menu = ttk.OptionMenu(self.root, self.project_option_selected, *self.program_options)
+        self.program_menu['tooltip'] = 'Choose program / project.'
+        self.program_menu.place(x=10, y=69, width=150, height=25)
+
+        self.site_option_selected = tk.StringVar(self.root)
+        self.site_menu = ttk.OptionMenu(self.root, self.site_option_selected, *self.site_options)
+        self.site_menu['tooltip'] = 'Choose Site.'
+        self.site_menu.place(x=168, y=69, width=150, height=25)
+
+        self.hsd_source = tk.StringVar(value='Pre-Prod')
+        hsd_menu = tk.Menu(menu, tearoff=False)
+        menu.add_cascade(label='HSD Sources', menu=hsd_menu)
+        hsd_menu.add_radiobutton(label='HSD-Prod', value='Prod', variable=self.hsd_source, command=self.update_hsd_url)
+        hsd_menu.add_radiobutton(label='HSD-Pre', value='Pre-Prod', variable=self.hsd_source, command=self.update_hsd_url)
+
+        self.mode_label = tk.Label(self.root, text=f"{self.hsd_source.get()}uction", font=("Times", 16), fg="blue")
+        self.mode_label.place(x=150, y=4)
+
+        self.prog_source = tk.StringVar(value='CSV')
+        prog_menu = tk.Menu(menu, tearoff=False)
+        menu.add_cascade(label='Program Sources', menu=prog_menu)
+        prog_menu.add_radiobutton(label='HSD', value='HSD', variable=self.prog_source, command=lambda: self.get_opt_menu_list('services_sys_val.support.program', 'program'))
+        prog_menu.add_radiobutton(label='CSV', value='CSV', variable=self.prog_source, command=lambda: self.get_opt_menu_list('services_sys_val.support.program', 'program'))
+
+        self.ste_source = tk.StringVar(value='CSV')
+        ste_menu = tk.Menu(menu, tearoff=False)
+        menu.add_cascade(label='Site Sources', menu=ste_menu)
+        ste_menu.add_radiobutton(label='HSD', value='HSD', variable=self.ste_source, command=lambda: self.get_opt_menu_list('support.site', 'Site'))
+        ste_menu.add_radiobutton(label='CSV', value='CSV', variable=self.ste_source, command=lambda: self.get_opt_menu_list('support.site', 'Site'))
+
+        self.root.configure(menu=menu)
+
+        self.Button_advance = ttk.Button(self.root, text="->", command=self.advance_window)
+        self.Button_advance["tooltip"] = "Advance options."
+        self.Button_advance.place(x=417, y=4, width=65, height=30)
+
+        self.Label_ProgressSuccess = tk.Label(self.root, font=tk.font.Font(family='Times', size=14), fg="#333333", justify="left", text="")
+        self.Label_ProgressSuccess.place(x=0, y=340, width=492, height=20)
+
+        self.get_opt_menu_list('services_sys_val.support.program', 'program')
+        self.get_opt_menu_list('support.site', 'Site')
+        self.get_milestones()
+        self.load_static_vals()
+
+        self.customer_option_selected = tk.StringVar(self.root)
+        self.notify_option_selected = tk.StringVar(self.root)
+
+        self.clipboard = self.static_vals.get('createClipboard', 'FALSE')
+
+        # Create List for WorkWeek OptionMenu
+        self.WorkWeekList = list(range(53))
+
+        # Get the Date
+        today = datetime.date.today()
+        iso_calendar = today.isocalendar()
+        self.WorkWeek = iso_calendar[1]
+        self.year = iso_calendar[0]
+        self.WorkWeekValue_Inside = tk.StringVar(self.root)
+        self.YearValue_Inside = tk.StringVar(self.root)
+
+        # Create List for Year OptionMenu
+        self.YearList = list(range(2021, 2051))
+
+        self.Option_101 = ttk.OptionMenu(self.root, self.WorkWeekValue_Inside, *self.WorkWeekList)
+        self.Option_101['tooltip'] = 'Choose todays known work week for power on.'
+        self.Option_101.place(x=400, y=69, width=80, height=25)
+        self.WorkWeekValue_Inside.set(self.WorkWeek)
+
+        self.Option_403 = ttk.OptionMenu(self.root, self.YearValue_Inside, *self.YearList)
+        self.Option_403['tooltip'] = 'Choose todays known year for power on.'
+        self.Option_403.place(x=400, y=99, width=80, height=25)
+        self.YearValue_Inside.set(self.year)
+
+        # Create labels for pulldown Boxes
+        self.Label_Program = tk.Label(self.root, text="Program", font=("Times", 14), fg="#333333", bg=self.menu_color, anchor="c", justify="left")
+        self.Label_Program.place(x=10, y=41, width=150, height=25)
+
+        self.Label_Site = tk.Label(self.root, text="Site", font=("Times", 14), fg="#333333", bg=self.menu_color, anchor="c", justify="center")
+        self.Label_Site.place(x=168, y=41, width=150, height=25)
+
+        self.Label_PODate = tk.Label(self.root, text="Power On Date", font=("Times", 14), fg="#333333", bg=self.menu_color, anchor="c")
+        self.Label_PODate.place(x=335, y=41, width=150, height=25)
+
+        self.Label_WorkWeek = tk.Label(self.root, text="WW#", font=("Times", 14), fg="#333333", bg=self.menu_color, anchor="e")
+        self.Label_WorkWeek.place(x=336, y=69, width=60, height=25)
+
+        self.Label_Year = tk.Label(self.root, text="Year", font=("Times", 14), fg="#333333", bg=self.menu_color, anchor="e")
+        self.Label_Year.place(x=336, y=99, width=60, height=25)
+
+        # Create Select All checkbox
+        self.varSelectAll = tk.IntVar(self.root)
+        self.CheckBox_SelectAll = tk.Checkbutton(self.root, anchor="w", font=tk.font.Font(family='Times', size=10), fg="#333333", justify="left", text="Select All", offvalue="0", onvalue="1", command=self.CheckBox_SelectAll_command, variable=self.varSelectAll)
+        self.CheckBox_SelectAll.place(x=10, y=160, width=110, height=25)
+        self.CheckBox_SelectAll.select()
+
+        # Create Send Emails checkbox
+        self.varSend_email = tk.StringVar(self.root)
+        self.CheckBox_send_email = tk.Checkbutton(self.root, anchor="w", font=tk.font.Font(family='Times', size=10), fg="#333333", justify="left", text="Send Notification Email", offvalue="false", onvalue="true", variable=self.varSend_email)
+        self.CheckBox_send_email.place(x=340, y=132, width=160, height=25)
+        self.CheckBox_send_email.select()
+
+        # Create milestone check boxes
+        self.mk_checkboxes()
+
+        # Milestones Label
+        self.Label_MS = tk.Label(self.root, anchor="w", font=tk.font.Font(family='Times', size=14, weight="bold"), fg="#333333", justify="left", text="Milestones:", relief="flat")
+        self.Label_MS.place(x=10, y=131, width=186, height=30)
+
+        # Progress Label
+        self.Label_ProgressSuccess.place(x=30, y=635, width=246, height=20)
+        self.Label_ProgressSuccess["text"] = "Ready"
+        self.root.after(1, self.Label_ProgressSuccess.update())
+
+        self.total_tickets = 0
+        self.ticket_number = 0
+
+        self.ProgressBar = ttk.Progressbar(self.root)
+        self.ProgressBar.place(x=6, y=665, width=480, height=10)
+
+        self.Button_Create = ttk.Button(self.root, text="Create", command=self.build_ticket_details)
+        self.Button_Create["tooltip"] = "Create selected milestone tickets and copies links to them in the clipboard cache."
+        self.Button_Create.place(x=320, y=630, width=158, height=30)
+
+    def get_milestones(self):
         try:
-            with open(src_file, encoding="utf8") as f:    
-                csv_config = csv.DictReader(f)
-                
-                for line in csv_config:
-                    #Checks if there is a value in the first line and if it exist in HSD
-                    #print(f" Checking for {line[name]} ")
-                    if(line[name]) and line.get(name).lower() in data_lower:
-                        tmp_dict.append(line[name])
-                        if name == 'Site':                     
-                            sites_options.append(line['Site'])
-                            customer_options.update({line['Site']: line['Customer']})
-                            backup_options.update({line['Site']: line['Backup']})
-                            notify_dict.update({line['Site']: line['Notify']})
-                            lab_dict.update({line['Site']: line['Lab']})
-                            lead_dict.update({line['Site']: line['Customer']})
-                    else:
-                        print(f" - {line[name]} - Not Found In HSD - {hsd_source.get()}uction , Check Name and update {src_file}" )
-                        FileOpenMessage=f"Can not find {src_file}:\n"
-                        #FileOpenMessage = FileOpenMessage + f'\ndependencies/{name}.csv'
-            v_list = tmp_dict
-            v_list.sort()
-            #config_open=True
-            
-            # Function to update the options in the OptionMenu
-            if name == "program":
-                program_options = v_list
-                menu = program_menu['menu']
-                menu.delete(0, 'end')
-                options_name = program_options
-                opt_selected = project_option_selected
-            elif name == "Site":
-                site_options = v_list
-                menu = site_menu['menu']
-                menu.delete(0, 'end')
-                options_name = site_options
-                opt_selected = site_option_selected
-            else:
-                print(f"Menu not identified")
-                
-            for option in v_list:
-                menu.add_command(label=option, command=tk._setit(opt_selected, option))
-            #Optionally, set the default value to the first item in the new options
-            if options_name:
-                opt_selected.set('')
-#                opt_selected.set(options_name[0])
-            else:
-                print("Options list unassigned") 
-        except Exception as e:
-            print(e)
+            print('\nLoading milestone_vals:')
+            with open("dependencies/milestone_vals.csv", encoding="utf8") as data_file:
+                data = csv.reader(data_file)
+                dynamic_headers = next(data)[0:]
+                for row in data:
+                    temp_dict = {}
+                    keystone = row[0]
+                    name = row[2]
+                    values = []
+                    for x in row[0:]:
+                        values.append(x)
 
-### Load from HSD query and CSV File        
-    if source == 'HSD':
-        try:
-            v_list = [(item.get('' + field_type + '', None)) for item in data if item.get('' + field_type + '', None)]   
-            if name == 'Site': 
-                with open(src_file, encoding="utf8") as f:    
-                    csv_config = csv.DictReader(f)
-                    print('\nloading config and verifing options')
-                    for line in csv_config:
-                        #Checks if there is a value in the first line and if it exist in HSD
-                        #print(f" Checking for {line[name]} ")
-                        if(line[name]) and line.get(name).lower() in data_lower:
-                            tmp_dict.append(line[name])
-                            if name == 'Site':                     
-                                sites_options.append(line['Site'])
-                                customer_options.update({line['Site']: line['Customer']})
-                                backup_options.update({line['Site']: line['Backup']})
-                                notify_dict.update({line['Site']: line['Notify']})
-                                lab_dict.update({line['Site']: line['Lab']})
-                                lead_dict.update({line['Site']: line['Customer']})
-                        else:
-                            print(f" - {line[name]} - Not Found In HSD" )
-                            FileOpenMessage = f"{line[name]} - Not Found In {hsd_source.get()}"
-
-            # Function to update the options in the OptionMenu
-            if name == "program":
-                program_options = v_list
-                menu = program_menu['menu']
-                menu.delete(0, 'end')
-                options_name = program_options
-                opt_selected = project_option_selected
-            elif name == "Site":
-                site_options = v_list
-                menu = site_menu['menu']
-                menu.delete(0, 'end')
-                options_name = site_options
-                opt_selected = site_option_selected
-            else:
-                print(f"Menu not identified")
-                
-            for option in v_list:
-                menu.add_command(label=option, command=tk._setit(opt_selected, option))
-            #Optionally, set the default value to the first item in the new options
-            if options_name:
-                opt_selected.set('')
-            else:
-                print("Options list unassigned") 
+                    for i in range(len(values)):
+                        if values[i]:
+                            temp_dict[dynamic_headers[i]] = values[i]
+                    self.milestones[name] = temp_dict
+            self.milestone_vals_open = True
         except:
-            FileOpenMessage="Can not find file(s):\n"
-            FileOpenMessage = FileOpenMessage + f'\ndependencies/{name}.csv'
+            print('Failed to load Milestones!')
+            self.milestone_vals_open = False
 
-def load_static_vals():
-   ### Load Static_vals happens each time menu list are updated
-    try:
-        with open("dependencies/static_vals.csv", encoding="utf8") as f:
-            print('Loading static_vals:')
-            csv_static_vals = csv.DictReader(f)
-            for line in csv_static_vals:
-                static_vals[line['Item']] = line['Value']
-        static_vals_open=True
-    except:
-        static_vals_open=False
-        FileOpenMessage="Can not find file(s):\n"
-        FileOpenMessage = FileOpenMessage + '\ndependencies/static_vals.csv'
+    def mk_checkboxes(self):
+        print('')
+        cb_num = 1
+        start_y = 196
+        keystones = 0
 
-def CheckBox_SelectAll_command():
-    variables
-    if varSelectAll.get() == 1:
-            for checkbox in variables.values():
+        for key, item in self.milestones.items():
+            if item.get("keystone") == "1":
+                keystones += 1
+        try:
+            for key, item in self.milestones.items():
+                if item.get("keystone") == "1":
+                    var = tk.IntVar(self.root)
+                    checkbox = tk.Checkbutton(self.root)
+                    checkbox["anchor"] = "w"
+                    checkbox["font"] = tk.font.Font(family='Times', size=10)
+                    checkbox["fg"] = "#333333"
+                    checkbox["justify"] = "left"
+                    checkbox["text"] = self.milestones[key]["cb_title"]
+                    checkbox.place(x=10, y=160 + cb_num * 30, width=490, height=25)
+                    checkbox["offvalue"] = "0"
+                    checkbox["onvalue"] = "1"
+                    checkbox["variable"] = var
+                    checkbox.select()
+                    self.variables[key] = {'widget': checkbox, 'variable': var, 'text': checkbox["text"], 'mile': self.milestones[key]["mile"]}
+                    self.checkboxes[cb_num] = checkbox
+                    cb_num += 1
+        except:
+            print("Failed to create Milestone Checkboxes!")
+
+    def get_opt_menu_list(self, field, name):
+        if name == 'program':
+            source = self.prog_source.get()
+        if name == 'Site':
+            source = self.ste_source.get()
+
+        tmp_dict = []
+        data_lower = []
+        self.sites_options.clear()
+        self.customer_options.clear()
+        self.backup_options.clear()
+        self.notify_dict.clear()
+        self.lab_dict.clear()
+        self.lead_dict.clear()
+
+        src_file = f"dependencies/{name}.csv"
+        print("")
+        print(f"Loading {name} menu selections:")
+        print("")
+        self.update_hsd_url()
+        try:
+            headers = {'Content-type': 'application/json'}
+            url_validate = f'{self.auto_c}/{field}'
+            field_type = field
+            response = requests.get(url_validate, verify=False, auth=HTTPKerberosAuth(), headers=headers)
+
+            if response.status_code != 200:
+                return []
+
+            data = response.json().get("data", [])
+            data_lower = [(item.get('' + field_type + '', None)) for item in data if item.get('' + field_type + '', None)]
+
+            if not isinstance(data, list):
+                return []
+
+        except requests.RequestException as e:
+            tk.messagebox.showwarning('Connection Error', 'Not connected to HSDE-ES DB.')
+            return []
+        except Exception as e:
+            tk.messagebox.showwarning('Connection Error', 'Not connected to HSDE-ES DB.')
+            return []
+
+        if source == 'CSV':
+            try:
+                with open(src_file, encoding="utf8") as f:
+                    csv_config = csv.DictReader(f)
+
+                    for line in csv_config:
+                        if (line[name]) and line.get(name).lower() in data_lower:
+                            tmp_dict.append(line[name])
+                            if name == 'Site':
+                                self.sites_options.append(line['Site'])
+                                self.customer_options.update({line['Site']: line['Customer']})
+                                self.backup_options.update({line['Site']: line['Backup']})
+                                self.notify_dict.update({line['Site']: line['Notify']})
+                                self.lab_dict.update({line['Site']: line['Lab']})
+                                self.lead_dict.update({line['Site']: line['Customer']})
+                        else:
+                            print(f" - {line[name]} - Not Found In HSD - {self.hsd_source.get()}uction , Check Name and update {src_file}")
+                v_list = tmp_dict
+                v_list.sort()
+
+                if name == "program":
+                    self.program_options = v_list
+                    menu = self.program_menu['menu']
+                    menu.delete(0, 'end')
+                    options_name = self.program_options
+                    opt_selected = self.project_option_selected
+                elif name == "Site":
+                    self.site_options = v_list
+                    menu = self.site_menu['menu']
+                    menu.delete(0, 'end')
+                    options_name = self.site_options
+                    opt_selected = self.site_option_selected
+                else:
+                    print(f"Menu not identified")
+
+                for option in v_list:
+                    menu.add_command(label=option, command=tk._setit(opt_selected, option))
+                if options_name:
+                    opt_selected.set('')
+                else:
+                    print("Options list unassigned")
+            except Exception as e:
+                print(e)
+
+        if source == 'HSD':
+            try:
+                v_list = [(item.get('' + field_type + '', None)) for item in data if item.get('' + field_type + '', None)]
+                if name == 'Site':
+                    with open(src_file, encoding="utf8") as f:
+                        csv_config = csv.DictReader(f)
+                        print('\nloading config and verifying options')
+                        for line in csv_config:
+                            if (line[name]) and line.get(name).lower() in data_lower:
+                                tmp_dict.append(line[name])
+                                if name == 'Site':
+                                    self.sites_options.append(line['Site'])
+                                    self.customer_options.update({line['Site']: line['Customer']})
+                                    self.backup_options.update({line['Site']: line['Backup']})
+                                    self.notify_dict.update({line['Site']: line['Notify']})
+                                    self.lab_dict.update({line['Site']: line['Lab']})
+                                    self.lead_dict.update({line['Site']: line['Customer']})
+                            else:
+                                print(f" - {line[name]} - Not Found In HSD")
+                                FileOpenMessage = f"{line[name]} - Not Found In {self.hsd_source.get()}"
+
+                if name == "program":
+                    self.program_options = v_list
+                    menu = self.program_menu['menu']
+                    menu.delete(0, 'end')
+                    options_name = self.program_options
+                    opt_selected = self.project_option_selected
+                elif name == "Site":
+                    self.site_options = v_list
+                    menu = self.site_menu['menu']
+                    menu.delete(0, 'end')
+                    options_name = self.site_options
+                    opt_selected = self.site_option_selected
+                else:
+                    print(f"Menu not identified")
+
+                for option in v_list:
+                    menu.add_command(label=option, command=tk._setit(opt_selected, option))
+                if options_name:
+                    opt_selected.set('')
+                else:
+                    print("Options list unassigned")
+            except:
+                FileOpenMessage = "Can not find file(s):\n"
+                FileOpenMessage = FileOpenMessage + f'\ndependencies/{name}.csv'
+
+    def load_static_vals(self):
+        try:
+            with open("dependencies/static_vals.csv", encoding="utf8") as f:
+                print('Loading static_vals:')
+                csv_static_vals = csv.DictReader(f)
+                for line in csv_static_vals:
+                    self.static_vals[line['Item']] = line['Value']
+            self.static_vals_open = True
+        except:
+            self.static_vals_open = False
+            FileOpenMessage = "Can not find file(s):\n"
+            FileOpenMessage = FileOpenMessage + '\ndependencies/static_vals.csv'
+
+    def CheckBox_SelectAll_command(self):
+        if self.varSelectAll.get() == 1:
+            for checkbox in self.variables.values():
                 checkbox['widget'].select()
-    else:
-            for checkbox in variables.values():
+        else:
+            for checkbox in self.variables.values():
                 checkbox['widget'].deselect()
 
-def update_hsd_url(): 
-    source = hsd_source.get()
-    global url, linkUrl, icon, auto_c
-    global auto_c
-    #print(f"update_hsd_url called with source: {source}")
-    #print("")
-    mode_label.config(text=f"(HSD) {hsd_source.get()}uction")
-    if source == "Pre-Prod":
-        url = 'https://hsdes-api-pre.intel.com/rest/article'
-        linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
-        auto_c = 'https://hsdes-api-pre.intel.com/rest/query/autocomplete/support/services_sys_val/'
-        icon = PhotoImage(file='dependencies/Y.png')
-    if source == "Prod":
-        url = 'https://hsdes-api.intel.com/rest/article'
-        linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
-        auto_c = 'https://hsdes-api.intel.com/rest/query/autocomplete/support/services_sys_val/'
-        icon = PhotoImage(file='dependencies/B.png') 
+    def update_hsd_url(self):
+        source = self.hsd_source.get()
+        if source == "Pre-Prod":
+            self.url = 'https://hsdes-api-pre.intel.com/rest/article'
+            self.linkUrl = 'https://hsdes-pre.intel.com/appstore/article/#/'
+            self.auto_c = 'https://hsdes-api-pre.intel.com/rest/query/autocomplete/support/services_sys_val/'
+            self.icon = tk.PhotoImage(file='dependencies/Y.png')
+        if source == "Prod":
+            self.url = 'https://hsdes-api.intel.com/rest/article'
+            self.linkUrl = 'https://hsdes.intel.com/appstore/article/#/'
+            self.auto_c = 'https://hsdes-api.intel.com/rest/query/autocomplete/support/services_sys_val/'
+            self.icon = tk.PhotoImage(file='dependencies/B.png')
 
-def postnewHSD(fields):
-    headers = { 'Content-type': 'application/json' }
-    subject = "support"
-    tenant = "services_sys_val"
-    title = fields["title"]
-    description = fields["description"]
-    service_type = fields["service_type"]
-    service_sub_type = fields["service_sub_type"]
-    lab_org = fields["lab_org"]
-    category = fields["category"]
-    component = fields["component"]
-    priority = fields["priority"]
-    site = fields["site"]
-    notify = fields["notify"]
-    org_unit = fields["org_unit"]
-    customer_contact = fields["customer_contact"]
-    program = fields["program"]
-    milestone_eta = fields["milestone_eta"]
-    required_by_milestone = fields["required_by_milestone"]
-    survey_comment = fields["survey_comment"]
-    lab = fields['lab']
-    payload = {
-        "subject": subject,
-        "tenant": tenant,
-        "fieldValues": [
-            {
-            "title": title
-            },
-            {
-            "description": description
-            },
-            {
-            "services_sys_val.support.service_type": service_type
-            },
-            {
-            "services_sys_val.support.service_sub_type": service_sub_type
-            },
-            {
-            "services_sys_val.support.lab_org": lab_org
-            },
-            {
-            "services_sys_val.support.category": category
-            },
-            {
-            "component": component
-            },
-            {
-            "priority": priority
-            },
-            {
-            "support.customer_contact": customer_contact
-            },
-            {
-            "support.site": site
-            },
-            {
-            "services_sys_val.support.lab": lab
-            },
-            {
-            "notify": notify
-            },
-            {
-            "services_sys_val.support.org_unit": org_unit
-            },
-            {
-            "services_sys_val.support.program": program
-            },
-            {
-            "services_sys_val.support.milestone_eta": milestone_eta
-            },
-            {
-            "send_mail": varSend_email.get()
-            },
-            {
-            "services_sys_val.support.required_by_milestone": required_by_milestone
-            },
-            {
-            "services_sys_val.support.survey_comment": survey_comment
-            }
-        ]
+    def postnewHSD(self, fields):
+        headers = {'Content-type': 'application/json'}
+        subject = "support"
+        tenant = "services_sys_val"
+        title = fields["title"]
+        description = fields["description"]
+        service_type = fields["service_type"]
+        service_sub_type = fields["service_sub_type"]
+        lab_org = fields["lab_org"]
+        category = fields["category"]
+        component = fields["component"]
+        priority = fields["priority"]
+        site = fields["site"]
+        notify = fields["notify"]
+        org_unit = fields["org_unit"]
+        customer_contact = fields["customer_contact"]
+        program = fields["program"]
+        milestone_eta = fields["milestone_eta"]
+        required_by_milestone = fields["required_by_milestone"]
+        survey_comment = fields["survey_comment"]
+        lab = fields['lab']
+        payload = {
+            "subject": subject,
+            "tenant": tenant,
+            "fieldValues": [
+                {"title": title},
+                {"description": description},
+                {"services_sys_val.support.service_type": service_type},
+                {"services_sys_val.support.service_sub_type": service_sub_type},
+                {"services_sys_val.support.lab_org": lab_org},
+                {"services_sys_val.support.category": category},
+                {"component": component},
+                {"priority": priority},
+                {"support.customer_contact": customer_contact},
+                {"support.site": site},
+                {"services_sys_val.support.lab": lab},
+                {"notify": notify},
+                {"services_sys_val.support.org_unit": org_unit},
+                {"services_sys_val.support.program": program},
+                {"services_sys_val.support.milestone_eta": milestone_eta},
+                {"send_mail": self.varSend_email.get()},
+                {"services_sys_val.support.required_by_milestone": required_by_milestone},
+                {"services_sys_val.support.survey_comment": survey_comment}
+            ]
         }
-    
-    readyMessage=''
-    total_tickets=0
-    exitFunction=False
-    if customer_contact == '':
-        print('no customer')
-        readyMessage = "No Customer chosen.\n"
-        exitFunction=TRUE
 
-    # if notify == '':
-    #     print('no notify')
-    #     readyMessage = readyMessage + "No Notify chosen.\n"
-    #     exitFunction=TRUE
+        readyMessage = ''
+        total_tickets = 0
+        exitFunction = False
+        if customer_contact == '':
+            print('no customer')
+            readyMessage = "No Customer chosen.\n"
+            exitFunction = True
 
-    if lab == '':
-        print('no Lab')
-        readyMessage = readyMessage + "No Lab chosen.\n"
-        exitFunction=TRUE
+        if lab == '':
+            print('no Lab')
+            readyMessage = readyMessage + "No Lab chosen.\n"
+            exitFunction = True
 
-    readyMessage = readyMessage + "\nCheck config.csv file!"
-    if exitFunction==TRUE:
-        ticketInterval = ticketInterval
-        total_tickets = total_tickets
-        
-        if ticketInterval == total_tickets:
-            print(readyMessage)
-            tkinter.messagebox.showinfo('Config Error',readyMessage)
-        return None
-    else:
-        data = json.dumps(payload)
-        response = requests.post(url, verify=False,auth=HTTPKerberosAuth(), headers = headers, data = data)
-        return response.json()
-
-#--------------------------------------------------------------------------------------------------------------------
-#### Start Here------------------------------------------------------
-def build_ticket_details():
-    #global icon
-    not_ready=''
-    not_ready1=''
-    not_ready2=''
-
-    if (len(project_option_selected.get()) == 0):
-        not_ready1 = 'Select Program\n'
-
-    if (len(site_option_selected.get()) == 0):
-        not_ready2 = 'Select Site\n'
-        
-    not_ready = (not_ready1 + not_ready2)
-    print(not_ready)
-    
-    if (len(not_ready) == 0):
-        result=tkinter.messagebox.askquestion('Create Tickets?','Are you sure you want to create tickets?')
-
-        if result=='yes':
-            Label_ProgressSuccess["text"]= "Connecting to HSD-ES DB"
-            root.after(1,Label_ProgressSuccess.update())
-            
-            selected_site = site_option_selected.get()
-            selected_lab = lab_dict[selected_site]
-            selected_notify = notify_dict[selected_site]
-            selected_lead = lead_dict[selected_site]
-
-            print("")
-            print("################################")
-            print("## HSD Ticket Creation Report ##")
-            print("################################")
-            print("")
-            print(f"{hsd_source.get()}uction Mode:")
-            print("  - HSD Mode Using - " + str(url))
-            print("  - HSD Mode  - " + str(linkUrl))
-            print("")
-            print("Selected Program: {}".format(project_option_selected.get()))
-            print("Selected Site: " + selected_site)
-            print("Selected WW: {}".format(WorkWeekValue_Inside.get()))
-            print("Selected Year: {}".format(YearValue_Inside.get()))
-            print("Selected Customer: " + selected_lead)
-            print("Selected Notify PDL: " + selected_notify)
-            print("Selected Lab: " + selected_lab)
-
-            ### Checkbox check for keystone check boxes, Comment out for production                    
-            # for key, value in variables.items():
-            #     status = value['variable'].get()
-            #     text = value['text']
-            #     print("Status of checkbox ({} - {}): {}".format(key, text, status))
-            ### End Checkbox check
-            
-            for key, value in variables.items():
-                checkbox_dict.update({value['mile'].split('.')[0]:int(value['variable'].get())})
-
-            #Create a List of Dicts to store the complete tictet information. One ticket per row
-            fieldlist=[]
-
-            ### Test check for tickets that will be created based on check boxes enabled / disabled  Comment out for deployment
-            # print("")
-            # print("##########################")
-            # print("## HSD Milestone Status ##")
-            # print("##########################")
-            #for name, milestone in milestones.items():
-                # mile_value = milestone.get('mile').split('.')[0]
-                # if checkbox_dict[mile_value] == 1:
-                #     print(f"  Enabled - {milestone.get('cb_title')} {milestone.get('title')}")
-                # else:
-                #     print(f"  Disabled - {milestone.get('cb_title')} {milestone.get('title')}") 
-                ### end Test check
-
-            dictionaryloop=1
-            if dictionaryloop==1:
-                print("")
-                for name, milestone in milestones.items():
-                    # Retrieve the value associated with the key 'mile'
-                    mile_value = milestone.get('mile').split('.')[0]
-                    if checkbox_dict[mile_value] == 1:
-                        _title={}
-                        _title["title"]=milestone.get('title')
-                                
-                        _description={}
-                        _description["description"]=milestone.get("description")
-
-                        _required_by_milestone={}
-                        _required_by_milestone["required_by_milestone"]=milestone.get("required_by_milestone")
-
-                        _lab_org={}
-                        _lab_org["lab_org"]=static_vals.get("lab_org")
-
-                        _org_unit={}
-                        _org_unit["org_unit"]=static_vals.get("org_unit")
-
-                        _category={}
-                        _category["category"]=static_vals.get("category")
-
-                        _component={}
-                        _component["component"]=static_vals.get("component")
-
-                        _priority={}
-                        _priority["priority"]=static_vals.get("priority")
-
-                        _status={}
-                        _status["status"]=static_vals.get("status")
-
-                        _reason={}
-                        _reason["reason"]=static_vals.get("reason")
-
-                        _customer_contact={}
-                        _customer_contact["customer_contact"]=selected_lead
-
-                        _site={}
-                        _site["site"]=selected_site
-
-                        _program={}
-                        _program["program"]=project_option_selected.get()
-
-                        _milestone_eta={}
-                        d = YearValue_Inside.get()+WorkWeekValue_Inside.get()
-                        r = datetime.datetime.strptime(d + '-1', "%Y%W-%w")
-                        x = r - timedelta(weeks = int(milestone.get("ETA_WW")))
-                        year = str(x.isocalendar()[0])
-                        week = str(x.isocalendar()[1]).zfill(2)
-                        milestoneww = (year + "-" + week)
-                        _milestone_eta["milestone_eta"]=milestoneww
-
-                        _service_type={}
-                        _service_type["service_type"]=static_vals.get("service_type")
-
-                        _service_sub_type={}
-                        _service_sub_type["service_sub_type"]=static_vals.get("service_sub_type")
-
-                        _survey_comment={}
-                        _survey_comment["survey_comment"]=static_vals.get("survey_comment")
-
-                        _lab={'lab': selected_lab}
-
-                        _notify={'notify': selected_notify}
-                    
-                        line_dict={}
-                        line_dict.update(_title)
-                        line_dict.update(_description)
-                        line_dict.update(_lab_org)
-                        line_dict.update(_org_unit)
-                        line_dict.update(_category)
-                        line_dict.update(_component)
-                        line_dict.update(_priority)
-                        line_dict.update(_status)
-                        line_dict.update(_reason)
-                        line_dict.update(_customer_contact)
-                        line_dict.update(_notify)
-                        line_dict.update(_site)
-                        line_dict.update(_program)
-                        line_dict.update(_milestone_eta)
-                        line_dict.update(_service_type)
-                        line_dict.update(_service_sub_type)
-                        line_dict.update(_required_by_milestone)
-                        line_dict.update(_survey_comment)
-                        line_dict.update(_lab)
-                        fieldlist.append(line_dict)
-
-                        print("Creating - milestone ww = "+ str(milestoneww) + " " + milestone.get("title"))
-
-            print("")
-            #Count List lines
-            total_tickets = 0
-            ticketInterval = 0
-
-            for i in fieldlist:
-                total_tickets=total_tickets+1
-                total_tickets = total_tickets
-
+        readyMessage = readyMessage + "\nCheck config.csv file!"
+        if exitFunction:
             ticketInterval = ticketInterval
+            total_tickets = total_tickets
 
-            if total_tickets==0:
-                print('No Tickets')
-                tkinter.messagebox.showinfo('No Milestones Selected', 'Select at least one Milestone.')
-            else:
-                #Create Ticket(s)
-                ProgressBar['value']=0
-                ticket_number=0
-                error_number=0
-                tickets = []
-                errors = []
-                HSD_ID = []
-                
-                for fields in fieldlist:
-                    Button_Create["state"] = "disabled"
-                    ticketInterval = ticketInterval +1
-                    #----------------------------------------------------------
-                    response = postnewHSD(fields) #Uncomment to create tickets
-                    #----------------------------------------------------------
-                    #print('ticket_number',ticket_number)
+            if ticketInterval == total_tickets:
+                print(readyMessage)
+                tk.messagebox.showinfo('Config Error', readyMessage)
+            return None
+        else:
+            data = json.dumps(payload)
+            response = requests.post(self.url, verify=False, auth=HTTPKerberosAuth(), headers=headers, data=data)
+            return response.json()
 
-                    try:                         
-                        tickets.append(response['new_id'])
-                        print(f"Created {hsd_source.get()}uction ticket:",response['new_id'])
-                        HSD_ID.append(response['new_id'])
-                        ticket_number = ticket_number + 1
-                    except:
+    def build_ticket_details(self):
+        not_ready = ''
+        not_ready1 = ''
+        not_ready2 = ''
+
+        if (len(self.project_option_selected.get()) == 0):
+            not_ready1 = 'Select Program\n'
+
+        if (len(self.site_option_selected.get()) == 0):
+            not_ready2 = 'Select Site\n'
+
+        not_ready = (not_ready1 + not_ready2)
+        print(not_ready)
+
+        if (len(not_ready) == 0):
+            result = tk.messagebox.askquestion('Create Tickets?', 'Are you sure you want to create tickets?')
+
+            if result == 'yes':
+                self.Label_ProgressSuccess["text"] = "Connecting to HSD-ES DB"
+                self.root.after(1, self.Label_ProgressSuccess.update())
+
+                selected_site = self.site_option_selected.get()
+                selected_lab = self.lab_dict[selected_site]
+                selected_notify = self.notify_dict[selected_site]
+                selected_lead = self.lead_dict[selected_site]
+
+                print("")
+                print("################################")
+                print("## HSD Ticket Creation Report ##")
+                print("################################")
+                print("")
+                print(f"{self.hsd_source.get()}uction Mode:")
+                print("  - HSD Mode Using - " + str(self.url))
+                print("  - HSD Mode  - " + str(self.linkUrl))
+                print("")
+                print("Selected Program: {}".format(self.project_option_selected.get()))
+                print("Selected Site: " + selected_site)
+                print("Selected WW: {}".format(self.WorkWeekValue_Inside.get()))
+                print("Selected Year: {}".format(self.YearValue_Inside.get()))
+                print("Selected Customer: " + selected_lead)
+                print("Selected Notify PDL: " + selected_notify)
+                print("Selected Lab: " + selected_lab)
+
+                for key, value in self.variables.items():
+                    self.checkbox_dict.update({value['mile'].split('.')[0]: int(value['variable'].get())})
+
+                fieldlist = []
+
+                dictionaryloop = 1
+                if dictionaryloop == 1:
+                    print("")
+                    for name, milestone in self.milestones.items():
+                        mile_value = milestone.get('mile').split('.')[0]
+                        if self.checkbox_dict[mile_value] == 1:
+                            _title = {"title": milestone.get('title')}
+                            _description = {"description": milestone.get("description")}
+                            _required_by_milestone = {"required_by_milestone": milestone.get("required_by_milestone")}
+                            _lab_org = {"lab_org": self.static_vals.get("lab_org")}
+                            _org_unit = {"org_unit": self.static_vals.get("org_unit")}
+                            _category = {"category": self.static_vals.get("category")}
+                            _component = {"component": self.static_vals.get("component")}
+                            _priority = {"priority": self.static_vals.get("priority")}
+                            _status = {"status": self.static_vals.get("status")}
+                            _reason = {"reason": self.static_vals.get("reason")}
+                            _customer_contact = {"customer_contact": selected_lead}
+                            _site = {"site": selected_site}
+                            _program = {"program": self.project_option_selected.get()}
+
+                            d = self.YearValue_Inside.get() + self.WorkWeekValue_Inside.get()
+                            r = datetime.datetime.strptime(d + '-1', "%Y%W-%w")
+                            x = r - timedelta(weeks=int(milestone.get("ETA_WW")))
+                            year = str(x.isocalendar()[0])
+                            week = str(x.isocalendar()[1]).zfill(2)
+                            milestoneww = (year + "-" + week)
+                            _milestone_eta = {"milestone_eta": milestoneww}
+
+                            _service_type = {"service_type": self.static_vals.get("service_type")}
+                            _service_sub_type = {"service_sub_type": self.static_vals.get("service_sub_type")}
+                            _survey_comment = {"survey_comment": self.static_vals.get("survey_comment")}
+                            _lab = {'lab': selected_lab}
+                            _notify = {'notify': selected_notify}
+
+                            line_dict = {}
+                            line_dict.update(_title)
+                            line_dict.update(_description)
+                            line_dict.update(_lab_org)
+                            line_dict.update(_org_unit)
+                            line_dict.update(_category)
+                            line_dict.update(_component)
+                            line_dict.update(_priority)
+                            line_dict.update(_status)
+                            line_dict.update(_reason)
+                            line_dict.update(_customer_contact)
+                            line_dict.update(_notify)
+                            line_dict.update(_site)
+                            line_dict.update(_program)
+                            line_dict.update(_milestone_eta)
+                            line_dict.update(_service_type)
+                            line_dict.update(_service_sub_type)
+                            line_dict.update(_required_by_milestone)
+                            line_dict.update(_survey_comment)
+                            line_dict.update(_lab)
+                            fieldlist.append(line_dict)
+
+                            print("Creating - milestone ww = " + str(milestoneww) + " " + milestone.get("title"))
+
+                print("")
+                total_tickets = 0
+                ticketInterval = 0
+
+                for i in fieldlist:
+                    total_tickets = total_tickets + 1
+                    total_tickets = total_tickets
+
+                ticketInterval = ticketInterval
+
+                if total_tickets == 0:
+                    print('No Tickets')
+                    tk.messagebox.showinfo('No Milestones Selected', 'Select at least one Milestone.')
+                else:
+                    self.ProgressBar['value'] = 0
+                    ticket_number = 0
+                    error_number = 0
+                    tickets = []
+                    errors = []
+                    HSD_ID = []
+
+                    for fields in fieldlist:
+                        self.Button_Create["state"] = "disabled"
+                        ticketInterval = ticketInterval + 1
+                        response = self.postnewHSD(fields)
+
                         try:
-                            errors.append(response['message'])
-                            print('error:',response['message'])
-                            HSD_ID.append(response['message'])
-                            error_number = error_number + 1
+                            tickets.append(response['new_id'])
+                            print(f"Created {self.hsd_source.get()}uction ticket:", response['new_id'])
+                            HSD_ID.append(response['new_id'])
+                            ticket_number = ticket_number + 1
                         except:
-                            print('error')
-                                                
-                    ProgressBar['value']+=100/total_tickets
-                    Label_ProgressSuccess["text"]= f"Created: {hsd_source.get()}uction " + str(ticket_number) + " / " + str(total_tickets) + " tickets."
-                    root.after(1,ProgressBar.update(),Label_ProgressSuccess.update())
+                            try:
+                                errors.append(response['message'])
+                                print('error:', response['message'])
+                                HSD_ID.append(response['message'])
+                                error_number = error_number + 1
+                            except:
+                                print('error')
 
-                display_tickets='\n\n'
+                        self.ProgressBar['value'] += 100 / total_tickets
+                        self.Label_ProgressSuccess["text"] = f"Created: {self.hsd_source.get()}uction " + str(ticket_number) + " / " + str(total_tickets) + " tickets."
+                        self.root.after(1, self.ProgressBar.update(), self.Label_ProgressSuccess.update())
 
-                for line in HSD_ID:
-                    display_tickets=display_tickets + str(line) + '\n'
-
-                final_message=""
-                final_message=f"Successfully created {hsd_source.get()}uction " + str(ticket_number) + " of " + str(total_tickets) + " tickets. " + str(display_tickets)
-
-                if error_number>1:
-                    final_message=final_message + str(error_number) + " tickets had errors" 
-
-                tkinter.messagebox.showinfo('Tickets Created?',final_message)
-                
-                linkCollection = ""
-
-                if error_number == 0:
+                    display_tickets = '\n\n'
 
                     for line in HSD_ID:
-                        link = ""      
-                        link = linkUrl + str(line)
-                        linkCollection=linkCollection + link + " \n"
-                    linkCollection = linkCollection[0:(len(linkCollection)-2)]
-                    saveClipboard(linkCollection)
+                        display_tickets = display_tickets + str(line) + '\n'
 
-            Label_ProgressSuccess["text"]= "Ready"
-            root.after(1,Label_ProgressSuccess.update())
-            Button_Create["state"] = "enabled"
+                    final_message = ""
+                    final_message = f"Successfully created {self.hsd_source.get()}uction " + str(ticket_number) + " of " + str(total_tickets) + " tickets. " + str(display_tickets)
 
-            return
+                    if error_number > 1:
+                        final_message = final_message + str(error_number) + " tickets had errors"
+
+                    tk.messagebox.showinfo('Tickets Created?', final_message)
+
+                    self.linkCollection = ""
+
+                    if error_number == 0:
+                        for line in HSD_ID:
+                            link = ""
+                            link = self.linkUrl + str(line)
+                            self.linkCollection = self.linkCollection + link + " \n"
+                        self.linkCollection = self.linkCollection[0:(len(self.linkCollection) - 2)]
+                        self.saveClipboard(self.linkCollection)
+
+                self.Label_ProgressSuccess["text"] = "Ready"
+                self.root.after(1, self.Label_ProgressSuccess.update())
+                self.Button_Create["state"] = "enabled"
+
+                return
+            else:
+                return None
+
+        tk.messagebox.showerror('Not Ready!', not_ready)
+
+    def saveClipboard(self, my_string):
+        if self.clipboard == 'TRUE':
+            text_file = open(r'dependencies/Clipboard.txt', 'w')
+            text_file.write(my_string)
+            text_file.close()
+            command = 'clip < dependencies/Clipboard.txt'
+            os.system(command)
+
+    def advance_window(self, tog=[0]):
+        tog[0] = not tog[0]
+        if tog[0]:
+            print("Advance Window Open")
+            self.root.geometry("1292x740")
+            self.Button_advance["text"] = "<-"
+
+            # Create a frame to hold the notebook and add a border
+            notebook_frame = ttk.Frame(self.root, borderwidth=2, relief="solid")
+            notebook_frame.place(x=500, y=0, width=792, height=740)
+
+            # Create a notebook for tabs inside the frame
+            self.notebook = ttk.Notebook(notebook_frame)
+            self.notebook.pack(fill='both', expand=True)
+
+            # Add the Milestone Preview tab
+            self.milestone_preview_tab = ttk.Frame(self.notebook)
+            self.notebook.add(self.milestone_preview_tab, text="Milestone Preview")
+            MilestonePreviewApp(self.milestone_preview_tab)
+
+            # Add the Site Config tab
+            self.site_config_tab = ttk.Frame(self.notebook)
+            self.notebook.add(self.site_config_tab, text="Site Config")
+            SiteDetailsApp(self.site_config_tab, tab_type="site_config")
+
+            # Add the HSD Fields tab
+            self.hsd_fields_tab = ttk.Frame(self.notebook)
+            self.notebook.add(self.hsd_fields_tab, text="HSD Fields")
+            SiteDetailsApp(self.hsd_fields_tab, tab_type="hsd_fields")
+
+            # Bind the tab change event
+            self.notebook.bind("<<NotebookTabChanged>>", self.on_tab_change)
+
         else:
-            return None
+            print("Advance Window Close")
+            self.root.geometry("494x740")
+            self.Button_advance["text"] = "->"
+            if hasattr(self, 'notebook'):
+                self.notebook.destroy()
 
-    tkinter.messagebox.showerror('Not Ready!',not_ready)
+    def on_tab_change(self, event):
+        # Get the currently selected tab
+        selected_tab = event.widget.select()
+        tab_text = event.widget.tab(selected_tab, "text")
 
+        # If the HSD Fields tab is selected, set focus to the notebook itself
+        if tab_text == "HSD Fields":
+            self.notebook.focus_set()
 
-def saveClipboard(my_string):
-    if clipboard == 'TRUE':
-        text_file = open(r'dependencies/Clipboard.txt', 'w')
-        text_file.write(my_string)
-        text_file.close()
-        command = 'clip < dependencies/Clipboard.txt'
-        os.system(command)
+class MilestonePreviewApp:
+    def __init__(self, root):
+        # Create a frame for the Text widget and scrollbars
+        text_frame = ttk.Frame(root)
+        text_frame.pack(fill='both', expand=True, padx=5, pady=5)
 
-#Close GUI and Python
-def close():
-    exec
-    root.destroy()
-    
-#########################################################################################################
-root = tk.Tk()
-root.title("HSD-Lab Gen - Version " + str(vernum))
-root.eval("tk::PlaceWindow . center")
-# Setting window size
-width = 492
-height = 740
+        # HTML Input Textbox with Scrollbars
+        self.html_input = tk.Text(text_frame, wrap='none')
+        self.html_input.pack(side='left', fill='both', expand=True)
 
-# Get the screen width and height
-screenwidth = root.winfo_screenwidth()
-screenheight = root.winfo_screenheight()
+        # Vertical Scrollbar
+        self.v_scrollbar = ttk.Scrollbar(text_frame, orient='vertical', command=self.html_input.yview)
+        self.v_scrollbar.pack(side='right', fill='y')
+        self.html_input['yscrollcommand'] = self.v_scrollbar.set
 
-# Calculate the x and y coordinates for the window
-x = (screenwidth - width) // 2 - 400
-y = (screenheight - height) // 8 # Adjust this value to move the window higher up
+        # Horizontal Scrollbar
+        self.h_scrollbar = ttk.Scrollbar(root, orient='horizontal', command=self.html_input.xview)
+        self.h_scrollbar.pack(fill='x')
+        self.html_input['xscrollcommand'] = self.h_scrollbar.set
 
+        # Buttons Frame
+        button_frame = ttk.Frame(root)
+        button_frame.pack(fill='x', padx=5, pady=5)
 
-alignstr = f'{width}x{height}+{x}+{y}'
-root.geometry(alignstr)
+        # Preview Button
+        self.preview_button = ttk.Button(button_frame, text="Preview", command=self.preview_html)
+        self.preview_button.pack(side='left', expand=True, padx=5)
 
-root.geometry('494x740')
-root.resizable(width=False, height=False)
+        # Load File Button
+        self.load_button = ttk.Button(button_frame, text="Load File", command=self.load_html_file)
+        self.load_button.pack(side='left', expand=True, padx=5)
 
-# Create a frame to hold the canvas
-frame = tk.Frame(root, width=width, height=height)
-frame.pack(fill="both", expand=True)
+        # Save Milestone Button
+        self.save_button = ttk.Button(button_frame, text="Save Milestone", command=self.save_milestone)
+        self.save_button.pack(side='left', expand=True, padx=5)
 
-# Create the canvas
-cv = tk.Canvas(frame, width=width, height=height)
-cv.pack(fill="both", expand=True)
+        # Clear Button
+        self.clear_button = ttk.Button(button_frame, text="Clear", command=self.clear_entry)
+        self.clear_button.pack(side='right', expand=True, padx=5)
 
-# Rectangle dimensions
-rect_height = 88  # Adjusted to fit within the canvas height
+        # Convert to CSV Button
+        self.convert_button = ttk.Button(button_frame, text="Convert to CSV", command=self.convert_to_csv)
+        self.convert_button.pack(side='right', expand=True, padx=5)
 
-# Calculate the top-left and bottom-right coordinates of the rectangle
-rect_x1 = 2  # Start from the left edge of the canvas
-rect_y1 = 38  # Fixed y-coordinate for the top of the rectangle
-rect_x2 = width -2  # End at the right edge of the canvas
-rect_y2 = rect_y1 + rect_height
+        # CSV Frame
+        csv_frame = ttk.Frame(root)
+        csv_frame.pack(fill='x', padx=5, pady=5)
 
-cv.create_rectangle(rect_x1, rect_y1, rect_x2, rect_y2, fill=menu_color)
+        # CSV Label
+        csv_label = ttk.Label(csv_frame, text="CSV")
+        csv_label.pack(side='left', padx=5)
 
-# Adjust the lines to be within the rectangle
-line1_x = rect_x1 + (width / 3)
-line2_x = rect_x1 + (2 * width / 3)
-cv.create_line(line1_x, rect_y1, line1_x, rect_y2)
-cv.create_line(line2_x, rect_y1, line2_x, rect_y2)
+        # CSV Output Textbox
+        self.csv_output = tk.Text(csv_frame, height=1, wrap='none')
+        self.csv_output.pack(side='left', fill='x', expand=True)
 
-#Add Menu for Options
-menu = tk.Menu(root)
+        # Copy Button
+        self.copy_button = ttk.Button(csv_frame, text="Copy", command=self.copy_csv_to_clipboard)
+        self.copy_button.pack(side='right', padx=5)
 
-project_option_selected = tk.StringVar(root)
-program_menu=ttk.OptionMenu(root,project_option_selected,*program_options)
-program_menu['tooltip'] = 'Choose program / project.'
-program_menu.place(x=10,y=69,width=150,height=25)
+        # Variable to store HTML content
+        self.html_string = ""
 
-site_option_selected = tk.StringVar(root)
-site_menu=ttk.OptionMenu(root,site_option_selected,*site_options)
-site_menu['tooltip'] = 'Choose Site.'
-site_menu.place(x=168,y=69,width=150,height=25)
+        # Bind right-click to show context menu
+        self.html_input.bind("<Button-3>", self.show_context_menu)
 
-def advance_window(tog=[0]):
-    tog[0] = not tog[0]
-    if tog[0]:
-        print("Advance Window Open")
-        root.geometry("1292x740")
-        Button_advance["text"] = "<-"
-    else:
-        print("Advance Window Close")
-        root.geometry("494x740")
-        Button_advance["text"] = "->"
+        # Create context menu
+        self.context_menu = tk.Menu(self.html_input, tearoff=0)
+        self.context_menu.add_command(label="Copy", command=self.copy)
+        self.context_menu.add_command(label="Paste", command=self.paste)
 
-hsd_menu = tk.Menu(menu, tearoff=False)
-menu.add_cascade(label='HSD Sources', menu=hsd_menu)
-# Use a single StringVar to hold the value of the selected radio button
-hsd_source = tk.StringVar(value='Pre-Prod')
-# Add radio buttons to the menu
-hsd_menu.add_radiobutton(label='HSD-Prod', value='Prod', variable=hsd_source,command=update_hsd_url)
-hsd_menu.add_radiobutton(label='HSD-Pre', value='Pre-Prod', variable=hsd_source,command=update_hsd_url)
+        # Bind keyboard shortcuts
+        self.html_input.bind("<Control-c>", self.copy)
+        self.html_input.bind("<Control-v>", self.paste)
 
-# Create a label to display the current mode
-mode_label = tk.Label(root, text=f"{hsd_source.get()}uction", font=("Times", 16), fg="blue")
-mode_label.place(x=150, y=4)
+        # Home Directory Frame
+        home_dir_frame = ttk.Frame(root)
+        home_dir_frame.pack(fill='x', padx=5, pady=5)
 
-prog_menu = tk.Menu(menu, tearoff=False)
-menu.add_cascade(label='Program Sources', menu=prog_menu)
-# Use a single StringVar to hold the value of the selected radio button
-prog_source = tk.StringVar(value = 'CSV')
-# Add radio buttons to the menu
-prog_menu.add_radiobutton(label='HSD', value='HSD', variable=prog_source, command=lambda: get_opt_menu_list('services_sys_val.support.program','program'))
-prog_menu.add_radiobutton(label='CSV', value='CSV', variable=prog_source, command=lambda: get_opt_menu_list('services_sys_val.support.program','program'))
+        # Home Directory Label
+        home_dir_label = ttk.Label(home_dir_frame, text="Milestone Home Directory")
+        home_dir_label.pack(side='left', padx=5)
 
-ste_menu = tk.Menu(menu, tearoff=False)
-menu.add_cascade(label='Site Sources', menu=ste_menu)
-# Use a single StringVar to hold the value of the selected radio button
-ste_source = tk.StringVar(value = 'CSV')
-# Add radio buttons to the menu
-ste_menu.add_radiobutton(label='HSD', value='HSD', variable=ste_source, command=lambda: get_opt_menu_list('support.site','Site'))
-ste_menu.add_radiobutton(label='CSV', value='CSV', variable=ste_source, command=lambda: get_opt_menu_list('support.site','Site'))
-ste_menu = tk.Menu(menu, tearoff=False)
+        # Home Directory Entry
+        self.home_dir_var = tk.StringVar()
+        self.home_dir_entry = ttk.Entry(home_dir_frame, textvariable=self.home_dir_var, width=50)
+        self.home_dir_entry.pack(side='left', padx=5, fill='x', expand=True)
 
-root.configure(menu = menu)
+        # Update/Add Button
+        self.update_button = ttk.Button(home_dir_frame, text="Add", command=self.update_home_dir)
+        self.update_button.pack(side='left', padx=5)
 
-Button_advance=ttk.Button(root)
-Button_advance["text"] = "->"
-Button_advance["tooltip"] = "Advance options."
-Button_advance.place(x=417,y=4,width=65,height=30)
-Button_advance["command"] = advance_window   
+        # Load settings.json
+        self.load_settings()
 
-#ProgressSuccess Label
-Label_ProgressSuccess=tk.Label(root)
-ft = tkFont.Font(family='Times',size=14)
-Label_ProgressSuccess["font"] = ft
-Label_ProgressSuccess["fg"] = "#333333"
-Label_ProgressSuccess["justify"] = "left"
-Label_ProgressSuccess["text"] = ""
-Label_ProgressSuccess.place(x=0,y=340,width=492,height=20)
+        # Bind changes in the entry box to update the button label
+        self.home_dir_var.trace_add("write", self.update_button_label)
 
+        # Initialize the PyQt5 editor window
+        self.editor = None
 
-get_opt_menu_list('services_sys_val.support.program','program') 
-get_opt_menu_list('support.site','Site') 
-get_milestones()
-load_static_vals()
-#UpdateIcon()
+    def get_settings_path(self):
+        """Get the path to the settings.json file in the script's directory."""
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        return os.path.join(script_dir, "settings.json")
 
-customer_option_selected = tk.StringVar(root)
-notify_option_selected = tk.StringVar(root)
+    def load_settings(self):
+        """Load settings from settings.json and update the home directory entry."""
+        settings_path = self.get_settings_path()
+        try:
+            with open(settings_path, "r", encoding="utf-8") as file:
+                settings = json.load(file)
+                milestone_home = settings.get("milestone_home", "")
+                self.home_dir_var.set(milestone_home)
+                self.update_button_label()
+        except FileNotFoundError:
+            self.update_button.config(text="Add")
+        except json.JSONDecodeError:
+            messagebox.showerror("Error", "Error reading settings.json. Please check the file format.")
 
-clipboard = static_vals['createClipboard']
+    def update_button_label(self, *args):
+        """Update the button label based on the home directory entry."""
+        if self.home_dir_var.get().strip():
+            self.update_button.config(text="Change")
+        else:
+            self.update_button.config(text="Add")
 
-#Create List for WorkWeek OptionMenu
-i = 1
-WorkWeekList = []
-for i in range(53):
-    WorkWeekList.insert(i,i)
-    i += 1
+    def update_home_dir(self):
+        """Update the milestone home directory."""
+        initial_dir = self.home_dir_var.get().strip() if self.home_dir_var.get().strip() else None
+        selected_dir = filedialog.askdirectory(initialdir=initial_dir)
+        if selected_dir:
+            if os.access(selected_dir, os.R_OK | os.W_OK):
+                self.home_dir_var.set(selected_dir)
+                self.update_button.config(text="Change")
+                settings = {"milestone_home": selected_dir}
+                settings_path = self.get_settings_path()
+                try:
+                    with open(settings_path, "w", encoding="utf-8") as file:
+                        json.dump(settings, file, indent=4)
+                    print(f"Updated settings.json with milestone_home: {selected_dir}")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Error writing to settings.json: {e}")
+            else:
+                messagebox.showerror("Error", "Verify directory read/write and try again.")
+        else:
+            self.update_button.config(text="Add")
 
-#Get the Date
-today = datetime.date.today()
-iso_calendar = today.isocalendar()
-WorkWeek = iso_calendar[1]
-year = iso_calendar[0]
-WorkWeekValue_Inside = tk.StringVar(root)
-YearValue_Inside = tk.StringVar(root)
+    def preview_html(self):
+        """Create a temporary HTML file and open it in the browser."""
+        html_content = self.html_input.get("1.0", tk.END).strip()
+        if not html_content:
+            return  # Do nothing if input is empty
+        
+        # Write to a temporary file
+        temp_file = "temp_preview.html"
+        with open(temp_file, "w", encoding="utf-8") as file:
+            file.write(html_content)
 
-#Create List for Year OptionMenu
-i = 1
-YearList = []
-for i in range(2021,2051):
-    YearList.insert(i,i)
-    i += 1
+        # Open in web browser
+        webbrowser.open(f"file://{os.path.abspath(temp_file)}")
 
-Option_101=ttk.OptionMenu(root,WorkWeekValue_Inside,*WorkWeekList)
-Option_101['tooltip'] = 'Choose todays known work week for power on.'
-Option_101.place(x=400,y=69,width=80,height=25)
-WorkWeekValue_Inside.set(WorkWeek)
+    def load_html_file(self):
+        """Open an HTML or text file, clear the input box, and display its contents."""
+        initial_dir = self.home_dir_var.get().strip() if self.home_dir_var.get().strip() else None
+        file_path = filedialog.askopenfilename(initialdir=initial_dir, filetypes=[("HTML and Text Files", "*.html;*.htm;*.txt")])
+        if file_path:
+            try:
+                with open(file_path, "r", encoding="utf-8") as file:
+                    self.html_string = file.read()
+            except UnicodeDecodeError:
+                with open(file_path, "r", encoding="latin-1") as file:
+                    self.html_string = file.read()
+            
+            self.clear_entry()  # Clear the entry field before inserting new content
+            self.html_input.insert("1.0", self.html_string)  # Insert file content
+            self.update_csv_output(self.html_string)
 
-Option_403=ttk.OptionMenu(root,YearValue_Inside,*YearList)
-Option_403['tooltip'] = 'Choose todays known year for power on.'
-Option_403.place(x=400,y=99,width=80,height=25)
-YearValue_Inside.set(year)
+    def save_milestone(self):
+        """Save the milestone content to a text file."""
+        html_content = self.html_input.get("1.0", tk.END).strip()
+        if not html_content:
+            return  # Do nothing if input is empty
 
-# Create labels for pulldown Boxes
+        initial_dir = self.home_dir_var.get().strip() if self.home_dir_var.get().strip() else None
+        file_path = filedialog.asksaveasfilename(initialdir=initial_dir, defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
+        if file_path:
+            with open(file_path, "w", encoding="utf-8") as file:
+                file.write(html_content)
 
-# Program Label
-Label_Program = tk.Label(root, text="Program", font=("Times", 14), fg="#333333", bg=menu_color, anchor="c", justify="left")
-Label_Program.place(x=10, y=41, width=150, height=25)
+    def clear_entry(self):
+        """Clear the entry field and the CSV output."""
+        self.html_input.delete("1.0", tk.END)
+        self.csv_output.delete("1.0", tk.END)
+        self.csv_output.update_idletasks()  # Ensure the UI updates immediately
 
-# Site Label
-Label_Site = tk.Label(root, text="Site", font=("Times", 14), fg="#333333", bg=menu_color, anchor="c", justify="center")
-Label_Site.place(x=168, y=41, width=150, height=25)
+    def show_context_menu(self, event):
+        """Show the context menu on right-click."""
+        self.context_menu.tk_popup(event.x_root, event.y_root)
 
-# Power On Date Label
-Label_PODate = tk.Label(root, text="Power On Date", font=("Times", 14), fg="#333333", bg=menu_color, anchor="c")
-Label_PODate.place(x=335, y=41, width=150, height=25)
+    def copy(self, event=None):
+        """Copy selected text to the clipboard."""
+        self.html_input.event_generate("<<Copy>>")
 
-# WorkWeek Label
-Label_WorkWeek = tk.Label(root, text="WW#", font=("Times", 14), fg="#333333", bg=menu_color, anchor="e")
-Label_WorkWeek.place(x=336, y=69, width=60, height=25)
+    def paste(self, event=None):
+        """Paste text from the clipboard."""
+        self.html_input.event_generate("<<Paste>>")
 
-# Year Label
-Label_Year = tk.Label(root, text="Year", font=("Times", 14), fg="#333333", bg=menu_color, anchor="e")
-Label_Year.place(x=336, y=99, width=60, height=25)
+    def parse_geometry(self, geometry):
+        """Parse the geometry string to extract width, height, x, and y."""
+        dimensions, x_y = geometry.split('+', 1)
+        width, height = map(int, dimensions.split('x'))
+        x, y = map(int, x_y.split('+'))
+        return width, height, x, y
 
-# Create Select All checkbox
-varSelectAll=tk.IntVar(root)
-CheckBox_SelectAll=tk.Checkbutton(root)
-CheckBox_SelectAll["anchor"] = "w"
-#ft = tkFont.Font(family='Times',size=10)
-CheckBox_SelectAll["font"] = tkFont.Font(family='Times', size=10)
-CheckBox_SelectAll["fg"] = "#333333"
-CheckBox_SelectAll["justify"] = "left"
-CheckBox_SelectAll["text"] = "Select All"
-CheckBox_SelectAll.place(x=10,y=160,width=110,height=25)
-CheckBox_SelectAll["offvalue"] = "0"
-CheckBox_SelectAll["onvalue"] = "1"
-CheckBox_SelectAll["command"] = CheckBox_SelectAll_command
-CheckBox_SelectAll["variable"] = varSelectAll
-CheckBox_SelectAll.select()
+    def on_convert_callback(self, html_content):
+        """Callback function to handle converted HTML content."""
+        # Insert the converted HTML into the Tkinter HTML input box
+        self.clear_entry()
+        self.html_input.insert("1.0", html_content)
+        self.update_csv_output(html_content)
 
-#Create Send Emails checkbox
-varSend_email=tk.StringVar(root)
-CheckBox_send_email=tk.Checkbutton(root)
-CheckBox_send_email["anchor"] = "w"
-CheckBox_send_email["font"] = tkFont.Font(family='Times', size=10)
-CheckBox_send_email["fg"] = "#333333"
-CheckBox_send_email["justify"] = "left"
-CheckBox_send_email["text"] = "Send Notification Email"
-CheckBox_send_email.place(x=340,y=132,width=160,height=25)
-CheckBox_send_email["offvalue"] = "false"
-CheckBox_send_email["onvalue"] = "true"
-CheckBox_send_email["variable"] = varSend_email
-CheckBox_send_email.select()
+    def update_csv_output(self, html_content):
+        """Convert HTML content to a single line CSV-compatible format."""
+        csv_content = ' '.join(html_content.split()).replace(',', ';')  # Replace commas to avoid CSV issues
+        self.csv_output.delete("1.0", tk.END)
+        self.csv_output.insert("1.0", csv_content)
 
-# Create milestone check boxes
-mk_checkboxes()
+    def copy_csv_to_clipboard(self):
+        """Copy the CSV content to the clipboard."""
+        csv_content = self.csv_output.get("1.0", tk.END).strip()
+        self.root.clipboard_clear()
+        self.root.clipboard_append(csv_content)
+        self.root.update()  # Now it stays on the clipboard after the window is closed
 
-# Milestones Label
-Label_MS=tk.Label(root)
-Label_MS["anchor"] = "w"
-ft = tkFont.Font(family='Times',size=14, weight="bold")
-Label_MS["font"] = ft
-Label_MS["fg"] = "#333333"
-Label_MS["justify"] = "left"
-Label_MS["text"] = "Milestones:"
-Label_MS["relief"] = "flat"
-Label_MS.place(x=10,y=131,width=186,height=30)
+    def convert_to_csv(self):
+        """Convert HTML content to a CSV-compatible string and paste it into the CSV textbox."""
+        html_content = self.html_input.get("1.0", tk.END).strip()
+        if not html_content:
+            messagebox.showinfo("Nothing to Convert", "The preview window is empty. Please load or enter HTML content to convert.")
+            return
 
-# Progress Label
-Label_ProgressSuccess.place(x=30,y=635,width=246,height=20)
-Label_ProgressSuccess["text"] = "Ready"
-root.after(1,Label_ProgressSuccess.update())
+        # Convert HTML content to a single line CSV-compatible format
+        csv_content = ' '.join(html_content.split()).replace(',', ';')  # Replace commas to avoid CSV issues
+        self.csv_output.delete("1.0", tk.END)
+        self.csv_output.insert("1.0", csv_content)
 
-total_tickets = 0
-ticket_number = 0
+class SiteDetailsApp:
+    def __init__(self, root, tab_type):
+        self.root = root
+        self.sites_data = self.load_sites_data()
+        self.static_vals_data = self.load_static_vals_data()
+        self.selected_site_index = None
 
-ProgressBar=ttk.Progressbar(root)
-ProgressBar.place(x=6,y=665,width=480,height=10)
+        if tab_type == "site_config":
+            self.create_sites_config_section(root)
+        elif tab_type == "hsd_fields":
+            self.create_hsd_fields_section(root)
 
-Button_Create=ttk.Button(root)
-Button_Create["text"] = "Create"
-Button_Create["tooltip"] = "Create selected milestone tickets and copies links to them in the clipboard cache."
-Button_Create.place(x=320,y=630,width=158,height=30)
-Button_Create["command"] = build_ticket_details
+    def create_sites_config_section(self, parent):
+        # Create a canvas to draw the rectangle with a border
+        canvas_width = 600
+        canvas_height = 480
+        canvas = tk.Canvas(
+            parent,
+            width=canvas_width,
+            height=canvas_height,
+            #highlightbackground='black', # Set the border color
+            #highlightcolor='black',
+            #highlightthickness=2,  # Set the border thickness
+        )
+        canvas.place(x=10, y=10)
 
-# if __name__ == "__main__":
+        # Define the rectangle dimensions
+        rect_width = 586
+        rect_height = 400
 
-root.mainloop()
+        # Calculate the center of the canvas
+        center_x = canvas_width // 2
+        center_y = canvas_height // 2
+
+        # Calculate the rectangle's top-left and bottom-right coordinates
+        rect_x1 = center_x - rect_width // 2
+        rect_y1 = center_y - rect_height // 2
+        rect_x2 = center_x + rect_width // 2
+        rect_y2 = center_y + rect_height // 2
+
+        # Draw a rectangle on the canvas
+        canvas.create_rectangle(rect_x1, rect_y1, rect_x2, rect_y2, outline="black", width=2)
+
+        # Add a label for "Sites Config"
+        label = ttk.Label(parent, text="Sites Config", font=("Arial", 14, "bold"))
+        label.place(x=center_x - 260, y=rect_y1 - 20)
+
+        # Create a frame to hold the listbox, input fields, and buttons
+        input_frame = ttk.Frame(parent)
+
+        # Calculate the width and height of the input_frame
+        input_frame_width = 500  # Adjust this value based on the actual width of the frame
+        input_frame_height = 180  # Adjust this value based on the actual height of the frame
+
+        # Calculate the position to center the input_frame within the rectangle
+        input_frame_x = rect_x1 + (rect_width - input_frame_width) // 4
+        input_frame_y = rect_y1 + (rect_height - input_frame_height) // 8
+
+        # Place the input_frame at the calculated position
+        input_frame.place(x=input_frame_x, y=input_frame_y)
+
+        # Listbox for sites with a specified width
+        self.site_listbox = tk.Listbox(input_frame, width=20, height=22)
+        self.site_listbox.grid(row=0, column=0, rowspan=4, padx=5, pady=5, sticky="ns")
+
+        # Vertical Scrollbar
+        self.v_scrollbar = ttk.Scrollbar(input_frame, orient='vertical', command=self.site_listbox.yview)
+        self.v_scrollbar.grid(row=0, column=1, rowspan=4, sticky="ns")
+        self.site_listbox['yscrollcommand'] = self.v_scrollbar.set
+
+        # Populate the listbox with site names
+        for site in self.sites_data:
+            self.site_listbox.insert(tk.END, site['Site'])
+
+        # Bind the listbox selection event
+        self.site_listbox.bind('<<ListboxSelect>>', self.on_site_select)
+
+        # Input fields for site details
+        self.customer_var = tk.StringVar()
+        self.backup_var = tk.StringVar()
+        self.notify_var = tk.StringVar()
+        self.lab_var = tk.StringVar()
+
+        # Create input fields and buttons inside the frame
+        self.create_input_field(input_frame, "Customer:", self.customer_var, 0, 2, self.update_customer)
+        self.create_input_field(input_frame, "Backup:", self.backup_var, 1, 2, self.update_backup)
+        self.create_input_field(input_frame, "Notify:", self.notify_var, 2, 2, self.update_notify)
+        self.create_input_field(input_frame, "Lab:", self.lab_var, 3, 2, self.update_lab)
+
+    def create_hsd_fields_section(self, parent):
+        # Create a canvas to draw the rectangle with a border
+        canvas_width = 600
+        canvas_height = 560
+        canvas = tk.Canvas(
+            parent,
+            width=canvas_width,
+            height=canvas_height,
+            #highlightbackground='black', # Set the border color
+            #highlightcolor='black',
+            #highlightthickness=2,  # Set the border thickness
+        )
+        canvas.place(x=10, y=10)
+
+        # Define the rectangle dimensions
+        rect_width = 586
+        rect_height = 480
+
+        # Calculate the center of the canvas
+        center_x = canvas_width // 2
+        center_y = canvas_height // 2
+
+        # Calculate the rectangle's top-left and bottom-right coordinates
+        rect_x1 = center_x - rect_width // 2
+        rect_y1 = center_y - rect_height // 2
+        rect_x2 = center_x + rect_width // 2
+        rect_y2 = center_y + rect_height // 2
+
+        # Draw a rectangle on the canvas
+        canvas.create_rectangle(rect_x1, rect_y1, rect_x2, rect_y2, outline="black", width=2)
+
+        # Add a label for "HSD Fields"
+        label = ttk.Label(parent, text="HSD Fields", font=("Arial", 14, "bold"))
+        label.place(x=center_x - 260, y=rect_y1 - 20)
+
+        # Create a frame to hold the input fields and buttons
+        input_frame = ttk.Frame(parent)
+        input_frame.place(x=rect_x1 + 20, y=rect_y1 + 20)
+
+        # Create input fields for each item in static_vals_data
+        self.hsd_vars = {}
+        row = 0
+        for item, value in self.static_vals_data.items():
+            var = tk.StringVar(value=value)
+            self.hsd_vars[item] = var
+            self.create_input_field(input_frame, f"{item}:", var, row, 0, lambda i=item: self.update_hsd_field(i))
+            row += 1
+
+        # Set focus to the parent frame to ensure no input box is selected by default
+        parent.focus_set()
+
+    def create_input_field(self, parent, label_text, text_var, row, col_start, update_command):
+        """Create a label, entry field, and update button for site details."""
+        label = tk.Label(
+            parent,
+            text=label_text,
+            anchor="e",
+            #relief="solid",  # Use 'solid' for a solid border
+            #borderwidth=1,   # Set the border width
+        )
+        label.grid(row=row, column=col_start, padx=5, pady=5, sticky="e")
+
+        entry = ttk.Entry(parent, textvariable=text_var, width=30)
+        entry.grid(row=row, column=col_start + 1, padx=5, pady=5)
+
+        update_button = ttk.Button(parent, text="Update", command=update_command)
+        update_button.grid(row=row, column=col_start + 2, padx=5, pady=5)
+
+    def load_sites_data(self):
+        """Load site data from the Site.csv file."""
+        sites_data = []
+        try:
+            with open("dependencies/Site.csv", encoding="utf8") as f:
+                csv_reader = csv.DictReader(f)
+                for row in csv_reader:
+                    sites_data.append(row)
+        except FileNotFoundError:
+            messagebox.showerror("Error", "Site.csv file not found in dependencies folder.")
+        return sites_data
+
+    def load_static_vals_data(self):
+        """Load static values from the static_vals.csv file."""
+        static_vals_data = {}
+        try:
+            with open("dependencies/static_vals.csv", encoding="utf8") as f:
+                csv_reader = csv.DictReader(f)
+                for row in csv_reader:
+                    static_vals_data[row['Item']] = row['Value']
+        except FileNotFoundError:
+            messagebox.showerror("Error", "static_vals.csv file not found in dependencies folder.")
+        return static_vals_data
+
+    def on_site_select(self, event):
+        """Populate input fields with data from the selected site."""
+        selected_index = self.site_listbox.curselection()
+        if selected_index:
+            self.selected_site_index = selected_index[0]
+            selected_site = self.sites_data[self.selected_site_index]
+            self.customer_var.set(selected_site.get("Customer", ""))
+            self.backup_var.set(selected_site.get("Backup", ""))
+            self.notify_var.set(selected_site.get("Notify", ""))
+            self.lab_var.set(selected_site.get("Lab", ""))
+
+    def update_customer(self):
+        """Update the Customer field for the selected site."""
+        self.update_site_field("Customer", self.customer_var.get())
+
+    def update_backup(self):
+        """Update the Backup field for the selected site."""
+        self.update_site_field("Backup", self.backup_var.get())
+
+    def update_notify(self):
+        """Update the Notify field for the selected site."""
+        self.update_site_field("Notify", self.notify_var.get())
+
+    def update_lab(self):
+        """Update the Lab field for the selected site."""
+        self.update_site_field("Lab", self.lab_var.get())
+
+    def update_site_field(self, field_name, new_value):
+        """Update a specific field in the Site.csv file for the selected site."""
+        if self.selected_site_index is not None:
+            self.sites_data[self.selected_site_index][field_name] = new_value
+            self.save_sites_data()
+            messagebox.showinfo("Update Successful", f"{field_name} updated successfully.")
+
+    def update_hsd_field(self, item):
+        """Update a specific field in the static_vals.csv file."""
+        new_value = self.hsd_vars[item].get()
+        self.static_vals_data[item] = new_value
+        self.save_static_vals_data()
+        messagebox.showinfo("Update Successful", f"{item} updated successfully.")
+
+    def save_sites_data(self):
+        """Save the updated site data back to the Site.csv file."""
+        try:
+            with open("dependencies/Site.csv", "w", newline='', encoding="utf8") as f:
+                fieldnames = ["Site", "Customer", "Backup", "Notify", "Lab"]
+                csv_writer = csv.DictWriter(f, fieldnames=fieldnames)
+                csv_writer.writeheader()
+                csv_writer.writerows(self.sites_data)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save Site.csv: {e}")
+
+    def save_static_vals_data(self):
+        """Save the updated static values back to the static_vals.csv file."""
+        try:
+            with open("dependencies/static_vals.csv", "w", newline='', encoding="utf8") as f:
+                fieldnames = ["Item", "Value"]
+                csv_writer = csv.DictWriter(f, fieldnames=fieldnames)
+                csv_writer.writeheader()
+                for item, value in self.static_vals_data.items():
+                    csv_writer.writerow({"Item": item, "Value": value})
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save static_vals.csv: {e}")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = HSDLabGenApp(root)
+    root.mainloop()
