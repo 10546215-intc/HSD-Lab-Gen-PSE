@@ -913,8 +913,12 @@ class MilestonePreviewApp:
             label.grid(row=0, column=0, sticky='w', padx=5)
 
             var = tk.StringVar()
-            entry = ttk.Entry(input_frame, textvariable=var, width=80)
+            entry = ttk.Entry(input_frame, textvariable=var, width=60)
             entry.grid(row=0, column=1, sticky='w', padx=5)
+
+            # Update button
+            update_button = ttk.Button(input_frame, text="Update", command=lambda h=header: self.update_milestone_field(h))
+            update_button.grid(row=0, column=2, padx=5)
 
             # Store the variable for later use
             self.input_vars[header] = var
@@ -939,6 +943,33 @@ class MilestonePreviewApp:
             if milestone['Milestone'] == milestone_value:
                 return milestone
         return None
+
+    def update_milestone_field(self, field_name):
+        """Update the milestone.csv file for the selected milestone and field."""
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showinfo("Update", "Please select a milestone to update.")
+            return
+
+        selected_milestone = self.tree.item(selected_item, 'values')[0]  # Get the Milestone value
+        new_value = self.input_vars[field_name].get()
+
+        # Update the in-memory data
+        for milestone in self.milestones_data:
+            if milestone['Milestone'] == selected_milestone:
+                milestone[field_name] = new_value
+                break
+
+        # Write the updated data back to the CSV file
+        try:
+            with open("dependencies/milestones.csv", "w", newline='', encoding="utf8") as f:
+                fieldnames = self.milestones_data[0].keys()
+                csv_writer = csv.DictWriter(f, fieldnames=fieldnames)
+                csv_writer.writeheader()
+                csv_writer.writerows(self.milestones_data)
+            messagebox.showinfo("Update Successful", f"{field_name} updated successfully for milestone {selected_milestone}.")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update milestones.csv: {e}")
 
     def open_html_editor(self):
         """Open the HTML editor window."""
@@ -977,7 +1008,7 @@ class MilestonePreviewApp:
 
         # Open the temporary file in the default web browser
         webbrowser.open(f"file://{temp_file_path}")
-
+        
 class HtmlEditorWindow:
     def __init__(self, parent, milestone):
         self.window = tk.Toplevel(parent)
