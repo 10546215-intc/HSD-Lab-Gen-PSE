@@ -1,0 +1,129 @@
+<h3><b>Milestone - 1.11: Gather Project Details</b> (Time to PO: 104 to 78 Weeks)<o:p></o:p></h3>
+
+<p class="MsoListParagraphCxSpFirst" style="text-indent:-.25in;mso-list:l0 level1 lfo2"><!--[if !supportLists]-->-<span style="font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-alternates: normal; font-size-adjust: none; font-kerning: auto; font-optical-sizing: auto; font-feature-settings: normal; font-variation-settings: normal; font-variant-position: normal; font-variant-emoji: normal; font-stretch: normal; font-size: 7pt; line-height: normal; font-family: &quot;Times New Roman&quot;;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><!--[endif]--><b>Owner: </b>PSE Labs Readiness Lead<o:p></o:p></p>
+
+<p class="MsoListParagraphCxSpMiddle" style="text-indent:-.25in;mso-list:l0 level1 lfo2"><!--[if !supportLists]-->-<span style="font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-alternates: normal; font-size-adjust: none; font-kerning: auto; font-optical-sizing: auto; font-feature-settings: normal; font-variation-settings: normal; font-variant-position: normal; font-variant-emoji: normal; font-stretch: normal; font-size: 7pt; line-height: normal; font-family: &quot;Times New Roman&quot;;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><!--[endif]--><b>Start: </b>104 weeks before PO<o:p></o:p></p>
+
+<p class="MsoListParagraphCxSpLast" style="text-indent:-.25in;mso-list:l0 level1 lfo2"><!--[if !supportLists]-->-<span style="font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-alternates: normal; font-size-adjust: none; font-kerning: auto; font-optical-sizing: auto; font-feature-settings: normal; font-variation-settings: normal; font-variant-position: normal; font-variant-emoji: normal; font-stretch: normal; font-size: 7pt; line-height: normal; font-family: &quot;Times New Roman&quot;;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+</span><!--[endif]--><b>Complete: </b>78 weeks before PO<o:p></o:p></p>
+
+<p class="MsoNormal"><b><span style="font-size:12.0pt;line-height:107%">Overview:<o:p></o:p></span></b></p>
+
+<p class="MsoNormal">Early readiness planning steps - product timeline,
+identifying the labs, and adding the project name to HSD. &nbsp;Document the needs and progress in the ticket
+comments.<o:p></o:p></p>
+
+<table class="MsoTableGrid" border="1" cellspacing="0" cellpadding="0" width="624" style="width: 468.1pt; border: none;">
+ <tbody><tr style="mso-yfti-irow:0;mso-yfti-firstrow:yes;height:15.8pt">
+  <td width="30" valign="top" style="width:22.45pt;border:solid windowtext 1.0pt;
+  mso-border-alt:solid windowtext .5pt;background:#0068B5;mso-background-themecolor:
+  text2;padding:0in 5.4pt 0in 5.4pt;height:15.8pt">
+  <p class="MsoNormal" style="margin-bottom:0in;line-height:normal"><span style="font-size:12.0pt;color:white;mso-themecolor:background1">#<o:p></o:p></span></p>
+  </td>
+  <td width="297" valign="top" style="width:223.05pt;border:solid windowtext 1.0pt;
+  border-left:none;mso-border-left-alt:solid windowtext .5pt;mso-border-alt:
+  solid windowtext .5pt;background:#0068B5;mso-background-themecolor:text2;
+  padding:0in 5.4pt 0in 5.4pt;height:15.8pt">
+  <p class="MsoNormal" align="center" style="margin-bottom:0in;text-align:center;
+  line-height:normal"><span style="font-size:12.0pt;color:white;mso-themecolor:
+  background1">Action<o:p></o:p></span></p>
+  </td>
+  <td width="297" valign="top" style="width:222.6pt;border:solid windowtext 1.0pt;
+  border-left:none;mso-border-left-alt:solid windowtext .5pt;mso-border-alt:
+  solid windowtext .5pt;background:#0068B5;mso-background-themecolor:text2;
+  padding:0in 5.4pt 0in 5.4pt;height:15.8pt">
+  <p class="MsoNormal" align="center" style="margin-bottom:0in;text-align:center;
+  line-height:normal"><span style="font-size:12.0pt;color:white;mso-themecolor:
+  background1">Notes / Examples / Visual Aids<o:p></o:p></span></p>
+  </td>
+ </tr>
+ <tr style="mso-yfti-irow:1;height:43.45pt">
+  <td width="30" valign="top" style="width:22.45pt;border:solid windowtext 1.0pt;
+  border-top:none;mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+  background:#E9E9E9;mso-background-themecolor:background2;padding:0in 5.4pt 0in 5.4pt;
+  height:43.45pt">
+  <p class="MsoListParagraph" align="center" style="margin-top:0in;margin-right:
+  0in;margin-bottom:0in;margin-left:.25in;mso-add-space:auto;text-align:center;
+  text-indent:-.25in;line-height:normal;mso-list:l1 level1 lfo1"><!--[if !supportLists]--><span style="font-family:&quot;Calibri&quot;,sans-serif;mso-ascii-theme-font:minor-latin;
+  mso-hansi-theme-font:minor-latin;mso-bidi-theme-font:minor-latin;color:#262626;
+  mso-themecolor:text1">1<span style="font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-alternates: normal; font-size-adjust: none; font-kerning: auto; font-optical-sizing: auto; font-feature-settings: normal; font-variation-settings: normal; font-variant-position: normal; font-variant-emoji: normal; font-stretch: normal; font-size: 7pt; line-height: normal; font-family: &quot;Times New Roman&quot;;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><!--[endif]--><span style="color:#262626;mso-themecolor:
+  text1">&nbsp;</span></p>
+  </td>
+  <td width="297" valign="top" style="width:223.05pt;border-top:none;border-left:
+  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
+  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:43.45pt">
+  <p class="MsoNormal" style="margin-bottom:0in;line-height:normal">Give product
+  timeline and detailed input<o:p></o:p></p>
+  </td>
+  <td width="297" valign="top" style="width:222.6pt;border-top:none;border-left:
+  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
+  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:43.45pt">
+  <p class="MsoNormal" style="margin-bottom:0in;line-height:normal">Collect the
+  information about the project including Prognos loaded correctly (Quanity,
+  functions, sites and type of systems), OPL and Atlas and check PO dates are
+  correct.<o:p></o:p></p>
+  </td>
+ </tr>
+ <tr style="mso-yfti-irow:2;height:43.45pt">
+  <td width="30" valign="top" style="width:22.45pt;border:solid windowtext 1.0pt;
+  border-top:none;mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+  background:#E9E9E9;mso-background-themecolor:background2;padding:0in 5.4pt 0in 5.4pt;
+  height:43.45pt">
+  <p class="MsoListParagraph" align="center" style="margin-top:0in;margin-right:
+  0in;margin-bottom:0in;margin-left:.25in;mso-add-space:auto;text-align:center;
+  text-indent:-.25in;line-height:normal;mso-list:l1 level1 lfo1"><!--[if !supportLists]--><span style="font-family:&quot;Calibri&quot;,sans-serif;mso-ascii-theme-font:minor-latin;
+  mso-hansi-theme-font:minor-latin;mso-bidi-theme-font:minor-latin;color:#262626;
+  mso-themecolor:text1">2<span style="font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-alternates: normal; font-size-adjust: none; font-kerning: auto; font-optical-sizing: auto; font-feature-settings: normal; font-variation-settings: normal; font-variant-position: normal; font-variant-emoji: normal; font-stretch: normal; font-size: 7pt; line-height: normal; font-family: &quot;Times New Roman&quot;;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><!--[endif]--><span style="color:#262626;mso-themecolor:
+  text1">&nbsp;</span></p>
+  </td>
+  <td width="297" valign="top" style="width:223.05pt;border-top:none;border-left:
+  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
+  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:43.45pt">
+  <p class="MsoNormal" style="margin-bottom:0in;line-height:normal">Define
+  locations based on site infrastructure capacity<o:p></o:p></p>
+  </td>
+  <td width="297" valign="top" style="width:222.6pt;border-top:none;border-left:
+  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
+  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:43.45pt">
+  <p class="MsoNormal" style="margin-bottom:0in;line-height:normal">Work with
+  partners and agree on the distribution of systems across the labs.&nbsp; Determine what the current state of lab
+  capacity is based on the PSE LIT.<o:p></o:p></p>
+  </td>
+ </tr>
+ <tr style="mso-yfti-irow:3;mso-yfti-lastrow:yes;height:43.45pt">
+  <td width="30" valign="top" style="width:22.45pt;border:solid windowtext 1.0pt;
+  border-top:none;mso-border-top-alt:solid windowtext .5pt;mso-border-alt:solid windowtext .5pt;
+  background:#E9E9E9;mso-background-themecolor:background2;padding:0in 5.4pt 0in 5.4pt;
+  height:43.45pt">
+  <p class="MsoListParagraph" align="center" style="margin-top:0in;margin-right:
+  0in;margin-bottom:0in;margin-left:.25in;mso-add-space:auto;text-align:center;
+  text-indent:-.25in;line-height:normal;mso-list:l1 level1 lfo1"><!--[if !supportLists]--><span style="font-family:&quot;Calibri&quot;,sans-serif;mso-ascii-theme-font:minor-latin;
+  mso-hansi-theme-font:minor-latin;mso-bidi-theme-font:minor-latin;color:#262626;
+  mso-themecolor:text1">3<span style="font-variant-numeric: normal; font-variant-east-asian: normal; font-variant-alternates: normal; font-size-adjust: none; font-kerning: auto; font-optical-sizing: auto; font-feature-settings: normal; font-variation-settings: normal; font-variant-position: normal; font-variant-emoji: normal; font-stretch: normal; font-size: 7pt; line-height: normal; font-family: &quot;Times New Roman&quot;;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  </span></span><!--[endif]--><span style="color:#262626;mso-themecolor:
+  text1">&nbsp;</span></p>
+  </td>
+  <td width="297" valign="top" style="width:223.05pt;border-top:none;border-left:
+  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
+  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:43.45pt">
+  <p class="MsoNormal" style="margin-bottom:0in;line-height:normal">Update HSD-ES
+  with the project name<o:p></o:p></p>
+  </td>
+  <td width="297" valign="top" style="width:222.6pt;border-top:none;border-left:
+  none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+  mso-border-top-alt:solid windowtext .5pt;mso-border-left-alt:solid windowtext .5pt;
+  mso-border-alt:solid windowtext .5pt;padding:0in 5.4pt 0in 5.4pt;height:43.45pt">
+  <p class="MsoNormal" style="margin-bottom:0in;line-height:normal">Create HSD-ES
+  project name using Prognos official project name.<o:p></o:p></p>
+  </td>
+ </tr>
+</tbody></table>

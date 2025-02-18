@@ -11,6 +11,7 @@ from requests_kerberos import HTTPKerberosAuth
 import urllib3
 import os
 import webbrowser
+import tempfile
 
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -28,7 +29,7 @@ class HSDLabGenApp:
         self.linkUrl = ""
         self.auto_c = ""
         self.icon = ""
-        self.milestone_vals_open = ""
+        self.milestones_open = ""
         self.pull_down_mode = "dynamic"
         self.milestones = {}
         self.checkboxes = {}
@@ -214,26 +215,41 @@ class HSDLabGenApp:
 
     def get_milestones(self):
         try:
-            print('\nLoading milestone_vals:')
-            with open("dependencies/milestone_vals.csv", encoding="utf8") as data_file:
+            print('\nLoading milestones:')
+            with open("dependencies/milestones.csv", encoding="utf8") as data_file:
                 data = csv.reader(data_file)
                 dynamic_headers = next(data)[0:]
+                dynamic_headers.append("descriptions")  # Add the "descriptions" header
+
                 for row in data:
                     temp_dict = {}
                     keystone = row[0]
+                    Milestone = row[1]
                     name = row[2]
                     values = []
+
                     for x in row[0:]:
                         values.append(x)
-
+                        
                     for i in range(len(values)):
                         if values[i]:
                             temp_dict[dynamic_headers[i]] = values[i]
+
+                            # Add the "dictionary" field by reading the milestone file
+                            milestone_file_path = os.path.join('milestones/', Milestone + '.txt')
+                            if os.path.exists(milestone_file_path):
+                                with open(milestone_file_path, 'r', encoding='utf8') as milestone_file:
+                                    milestone_content = milestone_file.read()
+                                    temp_dict['description'] = milestone_content
+                            else:
+                                print(f"Milestone file '{milestone_file_path}' does not exist.")
+
                     self.milestones[name] = temp_dict
-            self.milestone_vals_open = True
-        except:
-            print('Failed to load Milestones!')
-            self.milestone_vals_open = False
+
+            self.milestones_open = True
+        except Exception as e:
+            print(f'Failed to load Milestones! Error: {e}')
+            self.milestones_open = False
 
     def mk_checkboxes(self):
         print('')
@@ -259,7 +275,7 @@ class HSDLabGenApp:
                     checkbox["onvalue"] = "1"
                     checkbox["variable"] = var
                     checkbox.select()
-                    self.variables[key] = {'widget': checkbox, 'variable': var, 'text': checkbox["text"], 'mile': self.milestones[key]["mile"]}
+                    self.variables[key] = {'widget': checkbox, 'variable': var, 'text': checkbox["text"], 'Milestone': self.milestones[key]["Milestone"]}
                     self.checkboxes[cb_num] = checkbox
                     cb_num += 1
         except:
@@ -508,6 +524,19 @@ class HSDLabGenApp:
         not_ready = ''
         not_ready1 = ''
         not_ready2 = ''
+        not_ready3 = 0
+
+        for name, milestone in self.milestones.items():
+            milestone_file_path = os.path.join('milestones/', str(milestone['Milestone']) + '.txt')
+            if os.path.exists(milestone_file_path):
+                pass
+            else:
+                print(f"Milestone file '{milestone_file_path}' does not exist.")
+                not_ready3 += 1
+                
+        if not_ready3 == 0: 
+            not_ready3 = ''
+        else: not_ready3 = 'Missing Milestone files\n'
 
         if (len(self.project_option_selected.get()) == 0):
             not_ready1 = 'Select Program\n'
@@ -515,7 +544,7 @@ class HSDLabGenApp:
         if (len(self.site_option_selected.get()) == 0):
             not_ready2 = 'Select Site\n'
 
-        not_ready = (not_ready1 + not_ready2)
+        not_ready = (not_ready1 + not_ready2 + not_ready3)
         print(not_ready)
 
         if (len(not_ready) == 0):
@@ -548,7 +577,7 @@ class HSDLabGenApp:
                 print("Selected Lab: " + selected_lab)
 
                 for key, value in self.variables.items():
-                    self.checkbox_dict.update({value['mile'].split('.')[0]: int(value['variable'].get())})
+                    self.checkbox_dict.update({value['Milestone'].split('.')[0]: int(value['variable'].get())})
 
                 fieldlist = []
 
@@ -556,7 +585,7 @@ class HSDLabGenApp:
                 if dictionaryloop == 1:
                     print("")
                     for name, milestone in self.milestones.items():
-                        mile_value = milestone.get('mile').split('.')[0]
+                        mile_value = milestone.get('Milestone').split('.')[0]
                         if self.checkbox_dict[mile_value] == 1:
                             _title = {"title": milestone.get('title')}
                             _description = {"description": milestone.get("description")}
@@ -577,7 +606,7 @@ class HSDLabGenApp:
                             x = r - timedelta(weeks=int(milestone.get("ETA_WW")))
                             year = str(x.isocalendar()[0])
                             week = str(x.isocalendar()[1]).zfill(2)
-                            milestoneww = (year + "-" + week)
+                            milestoneww = (year + week)
                             _milestone_eta = {"milestone_eta": milestoneww}
 
                             _service_type = {"service_type": self.static_vals.get("service_type")}
@@ -746,35 +775,244 @@ class HSDLabGenApp:
 
 class MilestonePreviewApp:
     def __init__(self, root):
-        # Create a frame for the Text widget and scrollbars
-        text_frame = ttk.Frame(root)
-        text_frame.pack(fill='both', expand=True, padx=5, pady=5)
+        self.root = root
+        self.milestones_data = self.load_milestones_data()
+        self.selected_milestone_index = None
 
-        # HTML Input Textbox with Scrollbars
-        self.html_input = tk.Text(text_frame, wrap='none')
-        self.html_input.pack(side='left', fill='both', expand=True)
+        # Create a frame to hold the canvas and other components
+        main_frame = ttk.Frame(root)
+        main_frame.pack(fill='both', expand=True, padx=10, pady=10)
+
+        # Create a canvas to draw the rectangle with a border
+        canvas_width = 740
+        canvas_height = 400  # Increased height
+        canvas = tk.Canvas(
+            main_frame,
+            width=canvas_width,
+            height=canvas_height,
+            highlightbackground='black',  # Set the border color
+            highlightthickness=2,  # Set the border thickness
+        )
+        canvas.grid(row=0, column=0, columnspan=2, sticky='nw', pady=10)
+
+        # Define the rectangle dimensions
+        rect_width = 720
+        rect_height = 340  # Increased height
+
+        # Calculate the center of the canvas
+        center_x = canvas_width // 2
+        center_y = canvas_height // 2
+
+        # Calculate the rectangle's top-left and bottom-right coordinates
+        rect_x1 = center_x - rect_width // 2
+        rect_y1 = center_y - rect_height // 2
+        rect_x2 = center_x + rect_width // 2
+        rect_y2 = center_y + rect_height // 2
+
+        # Draw a rectangle on the canvas
+        canvas.create_rectangle(rect_x1, rect_y1, rect_x2, rect_y2, outline="black", width=2)
+
+        # Add a label for "Milestones"
+        label = ttk.Label(main_frame, text="Milestones", font=("Arial", 14, "bold"))
+        label.place(x=center_x - 340, y=rect_y1 - 20)
+
+        # Create a frame to hold the Treeview and scrollbars
+        tree_frame = ttk.Frame(canvas)
+
+        # Place the tree_frame inside the canvas
+        canvas.create_window((rect_x1, rect_y1), window=tree_frame, anchor='nw', width=rect_width, height=rect_height)
+
+        # Create the Treeview widget with only the 'Milestone' and 'cb_title' columns
+        self.tree = ttk.Treeview(tree_frame, columns=('Milestone', 'cb_title'), show='headings')
+        self.tree.grid(row=0, column=0, sticky='nsew')
+
+        # Configure the grid to expand the Treeview
+        tree_frame.grid_rowconfigure(0, weight=1)
+        tree_frame.grid_columnconfigure(0, weight=1)
 
         # Vertical Scrollbar
-        self.v_scrollbar = ttk.Scrollbar(text_frame, orient='vertical', command=self.html_input.yview)
-        self.v_scrollbar.pack(side='right', fill='y')
-        self.html_input['yscrollcommand'] = self.v_scrollbar.set
+        self.v_scrollbar = ttk.Scrollbar(tree_frame, orient='vertical', command=self.tree.yview)
+        self.v_scrollbar.grid(row=0, column=1, sticky='ns')
+        self.tree['yscrollcommand'] = self.v_scrollbar.set
 
         # Horizontal Scrollbar
-        self.h_scrollbar = ttk.Scrollbar(root, orient='horizontal', command=self.html_input.xview)
-        self.h_scrollbar.pack(fill='x')
-        self.html_input['xscrollcommand'] = self.h_scrollbar.set
+        self.h_scrollbar = ttk.Scrollbar(tree_frame, orient='horizontal', command=self.tree.xview)
+        self.h_scrollbar.grid(row=1, column=0, sticky='ew')
+        self.tree['xscrollcommand'] = self.h_scrollbar.set
+
+        # Add column headings
+        self.tree.heading('Milestone', text='Milestone')
+        self.tree.heading('cb_title', text='cb_title', anchor=tk.W)
+
+        # Measure the width of the 'Milestone' header text
+        header_font = tk.font.Font()
+        milestone_header_width = header_font.measure('Milestone')
+
+        # Configure columns
+        self.tree.column('Milestone', anchor='w', width=milestone_header_width, stretch=False)  # Set width to header text width
+        self.tree.column('cb_title', anchor='w', width=300)  # Increased width
+        self.tree.column('Milestone', anchor='center')
+
+        # Populate the Treeview with milestone data
+        self.populate_treeview()
+
+        # Bind the Treeview selection event
+        self.tree.bind('<<TreeviewSelect>>', self.on_milestone_select)
+
+        # Create input fields for each column in the CSV file
+        self.input_vars = {}
+        self.create_input_fields(main_frame)
+
+        # Create a frame for buttons
+        button_frame = ttk.Frame(main_frame)
+        button_frame.grid(row=2, column=0, columnspan=2, pady=10)
+
+        # Add a Preview button
+        self.preview_button = ttk.Button(button_frame, text="Preview Milestone Description", command=self.preview_html)
+        self.preview_button.pack(side='left', padx=5)
+
+        # Add a button to open the HTML editor window
+        self.open_html_editor_button = ttk.Button(button_frame, text="Open Milestone Description (HTML) Editor", command=self.open_html_editor)
+        self.open_html_editor_button.pack(side='left', padx=5)
+
+    def load_milestones_data(self):
+        """Load milestone data from the milestones.csv file."""
+        milestones_data = []
+        try:
+            with open("dependencies/milestones.csv", encoding="utf8") as f:
+                csv_reader = csv.DictReader(f)
+                for row in csv_reader:
+                    milestones_data.append(row)
+        except FileNotFoundError:
+            messagebox.showerror("Error", "milestones.csv file not found in dependencies folder.")
+        return milestones_data
+
+    def populate_treeview(self):
+        """Populate the Treeview with milestone data."""
+        for milestone in self.milestones_data:
+            self.tree.insert('', tk.END, values=(milestone['Milestone'], milestone['cb_title']))
+
+    def create_input_fields(self, parent):
+        """Create input fields for each column in the CSV file."""
+        if not self.milestones_data:
+            return
+
+        # Create a main frame to hold all input field frames
+        main_input_frame = ttk.Frame(parent)
+        main_input_frame.grid(row=1, column=0, sticky='nw', padx=10, pady=10)
+
+        # Create input fields for each column
+        headers = self.milestones_data[0].keys()
+        for i, header in enumerate(headers):
+            # Create a frame for each input field
+            input_frame = ttk.Frame(main_input_frame)
+            input_frame.grid(row=i, column=0, sticky='w', padx=5, pady=5)
+
+            # Create label and entry within the frame
+            label = ttk.Label(input_frame, text=header, width=15, anchor='w', font=("Arial", 10, "bold"))  # Set a fixed width for labels
+            label.grid(row=0, column=0, sticky='w', padx=5)
+
+            var = tk.StringVar()
+            entry = ttk.Entry(input_frame, textvariable=var, width=80)
+            entry.grid(row=0, column=1, sticky='w', padx=5)
+
+            # Store the variable for later use
+            self.input_vars[header] = var
+
+        # Adjust column weights to ensure proper alignment
+        main_input_frame.grid_columnconfigure(0, weight=1)
+
+    def on_milestone_select(self, event):
+        """Populate input fields with data from the selected milestone."""
+        selected_item = self.tree.selection()
+        if selected_item:
+            selected_milestone = self.tree.item(selected_item, 'values')[0]  # Get the Milestone value
+            milestone_data = self.find_milestone_data(selected_milestone)
+            if milestone_data:
+                for header, value in milestone_data.items():
+                    if header in self.input_vars:
+                        self.input_vars[header].set(value)
+
+    def find_milestone_data(self, milestone_value):
+        """Find and return the milestone data for the given milestone value."""
+        for milestone in self.milestones_data:
+            if milestone['Milestone'] == milestone_value:
+                return milestone
+        return None
+
+    def open_html_editor(self):
+        """Open the HTML editor window."""
+        selected_item = self.tree.selection()
+        if selected_item:
+            selected_milestone = self.tree.item(selected_item, 'values')[0]  # Get the Milestone value
+            HtmlEditorWindow(self.root, selected_milestone)
+        else:
+            messagebox.showinfo("No Selection", "Please select a milestone to edit.")
+
+    def preview_html(self):
+        """Preview the HTML content of the selected milestone."""
+        selected_item = self.tree.selection()
+        if not selected_item:
+            messagebox.showinfo("Preview", "Please select a milestone to preview.")
+            return
+
+        selected_milestone = self.tree.item(selected_item, 'values')[0]  # Get the Milestone value
+        milestone_file_path = os.path.join("milestones", f"{selected_milestone}.txt")
+
+        if not os.path.exists(milestone_file_path):
+            messagebox.showinfo("No Milestone File found!", "No Milestone Found Please create and save one.")
+            return
+
+        with open(milestone_file_path, "r", encoding="utf-8") as file:
+            html_content = file.read()
+
+        if not html_content.strip():
+            messagebox.showinfo("Preview", "No content to preview.")
+            return
+
+        # Create a temporary file to hold the HTML content
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as temp_file:
+            temp_file.write(html_content.encode('utf-8'))
+            temp_file_path = temp_file.name
+
+        # Open the temporary file in the default web browser
+        webbrowser.open(f"file://{temp_file_path}")
+
+class HtmlEditorWindow:
+    def __init__(self, parent, milestone):
+        self.window = tk.Toplevel(parent)
+        self.window.title("HTML Editor")
+        self.milestone = milestone
+
+        # Create a label to show the milestone being edited
+        milestone_label = ttk.Label(self.window, text=f"Editing Milestone: {self.milestone}", font=("Arial", 12, "bold"))
+        milestone_label.pack(pady=5)
+
+        # Create a frame for the Text widget and scrollbars
+        text_frame = ttk.Frame(self.window)
+        text_frame.pack(fill='both', expand=True, padx=10, pady=10)
+
+        # HTML Input Textbox with Scrollbars
+        self.html_input = tk.Text(text_frame, wrap='none', height=20, width=80)  # Set desired height and width
+        self.html_input.pack(side='left', fill='both', expand=True)
+
+        # Vertical Scrollbar for Textbox
+        self.text_v_scrollbar = ttk.Scrollbar(text_frame, orient='vertical', command=self.html_input.yview)
+        self.text_v_scrollbar.pack(side='right', fill='y')
+        self.html_input['yscrollcommand'] = self.text_v_scrollbar.set
+
+        # Horizontal Scrollbar for Textbox
+        self.text_h_scrollbar = ttk.Scrollbar(self.window, orient='horizontal', command=self.html_input.xview)
+        self.text_h_scrollbar.pack(fill='x')
+        self.html_input['xscrollcommand'] = self.text_h_scrollbar.set
 
         # Buttons Frame
-        button_frame = ttk.Frame(root)
-        button_frame.pack(fill='x', padx=5, pady=5)
+        button_frame = ttk.Frame(self.window)
+        button_frame.pack(fill='x', pady=10)
 
         # Preview Button
         self.preview_button = ttk.Button(button_frame, text="Preview", command=self.preview_html)
         self.preview_button.pack(side='left', expand=True, padx=5)
-
-        # Load File Button
-        self.load_button = ttk.Button(button_frame, text="Load File", command=self.load_html_file)
-        self.load_button.pack(side='left', expand=True, padx=5)
 
         # Save Milestone Button
         self.save_button = ttk.Button(button_frame, text="Save Milestone", command=self.save_milestone)
@@ -784,213 +1022,49 @@ class MilestonePreviewApp:
         self.clear_button = ttk.Button(button_frame, text="Clear", command=self.clear_entry)
         self.clear_button.pack(side='right', expand=True, padx=5)
 
-        # Convert to CSV Button
-        self.convert_button = ttk.Button(button_frame, text="Convert to CSV", command=self.convert_to_csv)
-        self.convert_button.pack(side='right', expand=True, padx=5)
+        # Load the milestone file if it exists
+        self.load_milestone_file()
 
-        # CSV Frame
-        csv_frame = ttk.Frame(root)
-        csv_frame.pack(fill='x', padx=5, pady=5)
-
-        # CSV Label
-        csv_label = ttk.Label(csv_frame, text="CSV")
-        csv_label.pack(side='left', padx=5)
-
-        # CSV Output Textbox
-        self.csv_output = tk.Text(csv_frame, height=1, wrap='none')
-        self.csv_output.pack(side='left', fill='x', expand=True)
-
-        # Copy Button
-        self.copy_button = ttk.Button(csv_frame, text="Copy", command=self.copy_csv_to_clipboard)
-        self.copy_button.pack(side='right', padx=5)
-
-        # Variable to store HTML content
-        self.html_string = ""
-
-        # Bind right-click to show context menu
-        self.html_input.bind("<Button-3>", self.show_context_menu)
-
-        # Create context menu
-        self.context_menu = tk.Menu(self.html_input, tearoff=0)
-        self.context_menu.add_command(label="Copy", command=self.copy)
-        self.context_menu.add_command(label="Paste", command=self.paste)
-
-        # Bind keyboard shortcuts
-        self.html_input.bind("<Control-c>", self.copy)
-        self.html_input.bind("<Control-v>", self.paste)
-
-        # Home Directory Frame
-        home_dir_frame = ttk.Frame(root)
-        home_dir_frame.pack(fill='x', padx=5, pady=5)
-
-        # Home Directory Label
-        home_dir_label = ttk.Label(home_dir_frame, text="Milestone Home Directory")
-        home_dir_label.pack(side='left', padx=5)
-
-        # Home Directory Entry
-        self.home_dir_var = tk.StringVar()
-        self.home_dir_entry = ttk.Entry(home_dir_frame, textvariable=self.home_dir_var, width=50)
-        self.home_dir_entry.pack(side='left', padx=5, fill='x', expand=True)
-
-        # Update/Add Button
-        self.update_button = ttk.Button(home_dir_frame, text="Add", command=self.update_home_dir)
-        self.update_button.pack(side='left', padx=5)
-
-        # Load settings.json
-        self.load_settings()
-
-        # Bind changes in the entry box to update the button label
-        self.home_dir_var.trace_add("write", self.update_button_label)
-
-        # Initialize the PyQt5 editor window
-        self.editor = None
-
-    def get_settings_path(self):
-        """Get the path to the settings.json file in the script's directory."""
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        return os.path.join(script_dir, "settings.json")
-
-    def load_settings(self):
-        """Load settings from settings.json and update the home directory entry."""
-        settings_path = self.get_settings_path()
-        try:
-            with open(settings_path, "r", encoding="utf-8") as file:
-                settings = json.load(file)
-                milestone_home = settings.get("milestone_home", "")
-                self.home_dir_var.set(milestone_home)
-                self.update_button_label()
-        except FileNotFoundError:
-            self.update_button.config(text="Add")
-        except json.JSONDecodeError:
-            messagebox.showerror("Error", "Error reading settings.json. Please check the file format.")
-
-    def update_button_label(self, *args):
-        """Update the button label based on the home directory entry."""
-        if self.home_dir_var.get().strip():
-            self.update_button.config(text="Change")
+    def load_milestone_file(self):
+        """Load the milestone file and display its contents."""
+        milestone_file_path = os.path.join("milestones", f"{self.milestone}.txt")
+        if os.path.exists(milestone_file_path):
+            with open(milestone_file_path, "r", encoding="utf-8") as file:
+                content = file.read()
+                self.html_input.delete("1.0", tk.END)
+                self.html_input.insert("1.0", content)
         else:
-            self.update_button.config(text="Add")
-
-    def update_home_dir(self):
-        """Update the milestone home directory."""
-        initial_dir = self.home_dir_var.get().strip() if self.home_dir_var.get().strip() else None
-        selected_dir = filedialog.askdirectory(initialdir=initial_dir)
-        if selected_dir:
-            if os.access(selected_dir, os.R_OK | os.W_OK):
-                self.home_dir_var.set(selected_dir)
-                self.update_button.config(text="Change")
-                settings = {"milestone_home": selected_dir}
-                settings_path = self.get_settings_path()
-                try:
-                    with open(settings_path, "w", encoding="utf-8") as file:
-                        json.dump(settings, file, indent=4)
-                    print(f"Updated settings.json with milestone_home: {selected_dir}")
-                except Exception as e:
-                    messagebox.showerror("Error", f"Error writing to settings.json: {e}")
-            else:
-                messagebox.showerror("Error", "Verify directory read/write and try again.")
-        else:
-            self.update_button.config(text="Add")
+            messagebox.showinfo("No Milestone File found!", "No Milestone Found Please create and save one.")
 
     def preview_html(self):
-        """Create a temporary HTML file and open it in the browser."""
+        """Preview the HTML content."""
         html_content = self.html_input.get("1.0", tk.END).strip()
         if not html_content:
-            return  # Do nothing if input is empty
-        
-        # Write to a temporary file
-        temp_file = "temp_preview.html"
-        with open(temp_file, "w", encoding="utf-8") as file:
-            file.write(html_content)
-
-        # Open in web browser
-        webbrowser.open(f"file://{os.path.abspath(temp_file)}")
-
-    def load_html_file(self):
-        """Open an HTML or text file, clear the input box, and display its contents."""
-        initial_dir = self.home_dir_var.get().strip() if self.home_dir_var.get().strip() else None
-        file_path = filedialog.askopenfilename(initialdir=initial_dir, filetypes=[("HTML and Text Files", "*.html;*.htm;*.txt")])
-        if file_path:
-            try:
-                with open(file_path, "r", encoding="utf-8") as file:
-                    self.html_string = file.read()
-            except UnicodeDecodeError:
-                with open(file_path, "r", encoding="latin-1") as file:
-                    self.html_string = file.read()
-            
-            self.clear_entry()  # Clear the entry field before inserting new content
-            self.html_input.insert("1.0", self.html_string)  # Insert file content
-            self.update_csv_output(self.html_string)
-
-    def save_milestone(self):
-        """Save the milestone content to a text file."""
-        html_content = self.html_input.get("1.0", tk.END).strip()
-        if not html_content:
-            return  # Do nothing if input is empty
-
-        initial_dir = self.home_dir_var.get().strip() if self.home_dir_var.get().strip() else None
-        file_path = filedialog.asksaveasfilename(initialdir=initial_dir, defaultextension=".txt", filetypes=[("Text Files", "*.txt")])
-        if file_path:
-            with open(file_path, "w", encoding="utf-8") as file:
-                file.write(html_content)
-
-    def clear_entry(self):
-        """Clear the entry field and the CSV output."""
-        self.html_input.delete("1.0", tk.END)
-        self.csv_output.delete("1.0", tk.END)
-        self.csv_output.update_idletasks()  # Ensure the UI updates immediately
-
-    def show_context_menu(self, event):
-        """Show the context menu on right-click."""
-        self.context_menu.tk_popup(event.x_root, event.y_root)
-
-    def copy(self, event=None):
-        """Copy selected text to the clipboard."""
-        self.html_input.event_generate("<<Copy>>")
-
-    def paste(self, event=None):
-        """Paste text from the clipboard."""
-        self.html_input.event_generate("<<Paste>>")
-
-    def parse_geometry(self, geometry):
-        """Parse the geometry string to extract width, height, x, and y."""
-        dimensions, x_y = geometry.split('+', 1)
-        width, height = map(int, dimensions.split('x'))
-        x, y = map(int, x_y.split('+'))
-        return width, height, x, y
-
-    def on_convert_callback(self, html_content):
-        """Callback function to handle converted HTML content."""
-        # Insert the converted HTML into the Tkinter HTML input box
-        self.clear_entry()
-        self.html_input.insert("1.0", html_content)
-        self.update_csv_output(html_content)
-
-    def update_csv_output(self, html_content):
-        """Convert HTML content to a single line CSV-compatible format."""
-        csv_content = ' '.join(html_content.split()).replace(',', ';')  # Replace commas to avoid CSV issues
-        self.csv_output.delete("1.0", tk.END)
-        self.csv_output.insert("1.0", csv_content)
-
-    def copy_csv_to_clipboard(self):
-        """Copy the CSV content to the clipboard."""
-        csv_content = self.csv_output.get("1.0", tk.END).strip()
-        self.root.clipboard_clear()
-        self.root.clipboard_append(csv_content)
-        self.root.update()  # Now it stays on the clipboard after the window is closed
-
-    def convert_to_csv(self):
-        """Convert HTML content to a CSV-compatible string and paste it into the CSV textbox."""
-        html_content = self.html_input.get("1.0", tk.END).strip()
-        if not html_content:
-            messagebox.showinfo("Nothing to Convert", "The preview window is empty. Please load or enter HTML content to convert.")
+            messagebox.showinfo("Preview", "No content to preview.")
             return
 
-        # Convert HTML content to a single line CSV-compatible format
-        csv_content = ' '.join(html_content.split()).replace(',', ';')  # Replace commas to avoid CSV issues
-        self.csv_output.delete("1.0", tk.END)
-        self.csv_output.insert("1.0", csv_content)
+        # Create a temporary file to hold the HTML content
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".html") as temp_file:
+            temp_file.write(html_content.encode('utf-8'))
+            temp_file_path = temp_file.name
 
+        # Open the temporary file in the default web browser
+        webbrowser.open(f"file://{temp_file_path}")
+
+    def save_milestone(self):
+        """Save the milestone content to a file."""
+        file_path = filedialog.asksaveasfilename(defaultextension=".txt", initialfile=self.milestone, filetypes=[("Text Files", "*.txt")])
+        if file_path:
+            with open(file_path, "w", encoding="utf-8") as file:
+                content = self.html_input.get("1.0", tk.END).strip()
+                file.write(content)
+            # Close the window after saving
+            self.window.destroy()
+
+    def clear_entry(self):
+        """Clear the entry field and the HTML input."""
+        self.html_input.delete("1.0", tk.END)
+        
 class SiteDetailsApp:
     def __init__(self, root, tab_type):
         self.root = root
