@@ -50,7 +50,7 @@ class HSDLabGenApp:
         self.static_vals_open = ""
         self.linkCollection = ""
         self.hsd_source = ""
-        self.vernum = "0.98"
+        self.vernum = "1.0"
         self.configver = "X"
         self.dynamicver = "X"
         self.staticver = "X"
