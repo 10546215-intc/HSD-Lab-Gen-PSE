@@ -1,6 +1,6 @@
-Site,Customer,Backup,Notify,Lab,Dynamic,Version
-Austin,amunson,,,NA,NEW,2
-BDC,rkrish9,,,EC03-2A iVE Lab,,
-Guadalajara,vhperezh,,Readiness Lab GDC,NA,,
-Oregon,adwinter,,,NA,,
-Santa Clara,chanko,,Readiness Lab SC,NA,,
+Site,Customer,Backup,Notify,Lab
+Austin,amunson,,,NA
+BDC,rkrish9,,,EC03-2A iVE Lab
+Guadalajara,vhperezh,,Readiness Lab GDC,NA
+Oregon,adwinter,,,NA
+Santa Clara,chanko,,Readiness Lab SC,NA

@@ -1,0 +1,40 @@
+keystone,Milestone,cb_title,title,required_by_milestone,ETA_WW
+1,1.11,1.11 - Long Term Forecasting,1.11 -  Gather Project Details (Time to PO: 104 to 78 Weeks),SOC Val 0.3,78
+0,1.12,1.12 - Long Term Forecasting,1.12 - Ticket Verification (Time to PO: 78 to 78 Weeks),SOC Val 0.3,78
+0,1.13,1.13 - Long Term Forecasting,1.13 - Infrastructure Assessment (Time to PO: 78 to 74 Weeks),SOC Val 0.3,74
+0,1.14,1.14 - Long Term Forecasting,1.14 -  Roadmap/Prognos (Time to PO: 78 to 78 Weeks),SOC Val 0.3,78
+0,1.15,1.15 - Long Term Forecasting,1.15 - Infrastructure Assessment (Time to PO: 78 to 74 Weeks),SOC Val 0.3,74
+1,2.11,2.11 - Infrastructure Demands and Capacity,2.11 -  Infrastructure Report (Time to PO: 74 to 74 Weeks),SOC Val 0.5,74
+0,2.12,2.12 - Technical Demands and Capacity,2.12 -  Project Funding (Time to PO: 78 to 78 Weeks),SOC Val 0.5,78
+0,2.13,2.13 - Technical Demands and Capacity,2.13 - Platform Loading (Time to PO: 78 to 74 Weeks),SOC Val 0.5,74
+0,2.14,2.14 - Technical Demands and Capacity,2.14 - Review Roadmap (Time to PO: 52 to 52 Weeks),SOC Val 0.5,52
+1,3.11,3.11 - Hardware Ordered - Document,3.11 -  Project Commitment (Time to PO: 74 to 26 Weeks),SOC Val 0.8,26
+0,3.12,3.12 - Hardware Ordered - Document,3.12 - Define Infrastructure Workflow (Time to PO: 26 to 26 Weeks),SOC Val 0.8,26
+0,3.21,3.21 - Hardware Ordered - Procure,3.21 - Place Order (Time to PO: 78 to 26 Weeks),SOC Val 0.8,26
+0,3.22,3.22 - Hardware Ordered - Procure,3.22 - Start TR (Time to PO: 52 to 26 Weeks),SOC Val 0.8,26
+0,3.23,3.23 - Hardware Ordered - Procure,3.23 - TR Review (Time to PO: 52 to 26 Weeks),SOC Val 0.8,26
+1,4.11,4.11 - Platforms and Configurations Expected - System,4.11 - Recipe Started (Time to PO: 26 to 12 Weeks),SOC Val 0.8,12
+0,4.12,4.12 - Platforms and Configurations Expected - System,4.12 - Last Infrastructure Conformation (Time to PO: 26 to 12 Weeks),SOC Val 0.8,12
+0,4.13,4.13 - Platforms and Configurations Expected - System,4.13 - Review Capacity and Customer Count (Time to PO: 20 to 16 Weeks),SOC Val 0.8,16
+0,4.14,4.14 - Platforms and Configurations Expected - System,4.14 - Identify Locations (Time to PO: 14 to 12 Weeks),SOC Val 0.8,12
+0,4.21,4.21 - Platforms and Configurations Expected - Space,4.21 - Management Review (Time to PO: 13 to 11 Weeks),SOC Val 0.8,11
+0,4.22,4.22 - Platforms and Configurations Expected - Space,4.22 - Infrastructure Last Check (Time to PO: 13 to 11 Weeks),SOC Val 0.8,11
+0,4.23,4.23 - Platforms and Configurations Expected - Space,4.23 - Review Space Needed per Partner (Time to PO: 13 to 11 Weeks),SOC Val 0.8,11
+0,4.31,4.31 - Confirm Traveler Requirements,4.31 - Begin Station Map (Time to PO: 13 to 4 Weeks),SOC Val 0.8,4
+1,5.11,5.11 - Last Call for Equipment Received,5.11 - Verify Hardware and T&M (Time to PO: 12 to 4 Weeks),SOC Val 0.8,4
+0,5.12,5.12 - Last Call for Equipment Received,5.12 - Work with PSE Labs APB (Time to PO: 12 to 4 Weeks),SOC Val 0.8,4
+0,5.13,5.13 - Last Call for Equipment Received,5.13 - Work with LaAM (Time to PO: 12 to 4 Weeks),SOC Val 0.8,4
+0,5.14,5.14 - Last Call for Equipment Received,Milestone 5.14 - Complete Station Map  (Time to PO: 8 to 2 Weeks),SOC Val 0.8,2
+1,6.11,6.11 - Finalize Details - Platform Count,Milestone 6.11 - Communicate Network Requirements (Time to PO: 6 to 4 Weeks),SOC Val 0.8,4
+0,6.12,6.12 - Finalize Details - Platform Count,Milestone 6.12 - Commitments (Time to PO: 4 to 4 Weeks),SOC Val 0.8,4
+0,6.21,6.21 - Finalize Details - Infrastructure,Milestone 6.21 - Ramp Down (Time to PO: 4 to -2 Weeks),SOC Val 0.8,-2
+0,6.22,6.22 - Finalize Details - Infrastructure,Milestone 6.22 - Station Readiness (Time to PO: 4 to -2 Weeks),SOC Val 0.8,-2
+0,6.23,6.23 - Finalize Details - Infrastructure,Milestone 6.23 - Infrastructure Conformation (Time to PO: 4 to -2 Weeks),SOC Val 0.8,-2
+0,6.31,6.31 - Finalize Details - Recipe Factory,Milestone 6.31 - First Draft (Time to PO: 4 to 0 Weeks),SOC Val 0.8,0
+1,7.11,7.11 - Staffing Confirmed for PO Support,Milestone 7.11 - Technical Training (Time to PO: 6 to 4 Weeks),SOC Val 0.8,4
+0,7.12,7.12 - Staffing Confirmed for PO Support,Milestone 7.12 - Commit to Staffing (Time to PO: 4 to 2 Weeks),SOC Val 0.8,2
+0,7.13,7.13 - Staffing Confirmed for PO Support,Milestone 7.13 - Define Staffing (Time to PO: 4 to 2 Weeks),SOC Val 0.8,2
+1,8.11,8.11 - Ramp-Up and Deployment of PO Systems,Milestone 8.11 - Risk Assessment (Time to PO: 4 to 2 Weeks),SOC Val 1.0,2
+0,8.12,8.12 - Ramp-Up and Deployment of PO Systems,Milestone 8.12 - Ramp Up (Time to PO: 4 to 0 Weeks),SOC Val 1.0,0
+0,8.13,8.13 - Ramp-Up and Deployment of PO Systems,Milestone 8.13 - Equipment Deployed (Time to PO: 4 to 0 Weeks),SOC Val 1.0,0
+0,8.14,8.14 - Ramp-Up and Deployment of PO Systems,Milestone 8.14 - Traveler Equipment (Time to PO: 2 to -2 Weeks),SOC Val 1.0,-2
