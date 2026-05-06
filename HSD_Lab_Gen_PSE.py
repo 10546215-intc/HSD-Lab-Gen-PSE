@@ -13,6 +13,8 @@ import os
 import webbrowser
 import tempfile
 
+
+
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 os.environ["no_proxy"] = "127.0.0.1,localhost,intel.com"
